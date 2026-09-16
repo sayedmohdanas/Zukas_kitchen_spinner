@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Public read-only access for campaign status & configuration
+    match /campaigns/{campaignId} {
+      allow read: if true;
+      allow write: if false; // Admin SDK / Console only
+    }
+
+    // Public read-only access for prize display metadata
+    match /prizes/{prizeId} {
+      allow read: if true;
+      allow write: if false; // Admin SDK / Console only
+    }
+
+    // Public direct reads and writes to spins collection are COMPLETELY BLOCKED!
+    // All spin transactions, eligibility checks, prize selection, and coupon generation
+    // must strictly occur through the trusted Cloud Function (spinWheel).
+    match /spins/{spinId} {
+      allow read, write: if false;
+    }
+  }
+}

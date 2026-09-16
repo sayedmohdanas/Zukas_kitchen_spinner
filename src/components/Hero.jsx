@@ -137,6 +137,7 @@ export default function Hero({
             <Spinner
               prizesList={prizesList}
               targetIndex={targetIndex}
+              selectedPrize={sessionPrize}
               isSpinning={isSpinning}
               onSpinComplete={onSpinComplete}
               disabled={isSpinning || hasSpun || !campaignEnabled}

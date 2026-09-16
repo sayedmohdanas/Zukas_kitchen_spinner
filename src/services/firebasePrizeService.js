@@ -118,6 +118,13 @@ export const fetchPrizesFromFirestore = async () => {
       });
     });
 
+    // Sort fetchedPrizes to preserve exact canonical segment order matching DEFAULT_PRIZES
+    fetchedPrizes.sort((a, b) => {
+      const idxA = DEFAULT_PRIZES.findIndex((p) => p.id === a.id);
+      const idxB = DEFAULT_PRIZES.findIndex((p) => p.id === b.id);
+      return (idxA !== -1 ? idxA : 999) - (idxB !== -1 ? idxB : 999);
+    });
+
     return fetchedPrizes;
   } catch (err) {
     console.error("Error fetching prizes from Firestore:", err);

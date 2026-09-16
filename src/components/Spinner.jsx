@@ -8,6 +8,7 @@ const SPIN_DURATION_MS = 8500; // 8.5 seconds (within 8-10s target)
 export default function Spinner({
   prizesList = defaultPrizes,
   targetIndex,
+  selectedPrize,
   isSpinning,
   onSpinComplete,
   disabled,
@@ -20,13 +21,31 @@ export default function Spinner({
   const numSegments = activePrizes.length;
   const segmentAngle = 360 / numSegments; // Dynamic angle (60 degrees for 6 items)
 
-  // Handle spin triggering when targetIndex is set and isSpinning becomes true
+  // Resolve effective target index by matching exact prize ID in activePrizes list
+  let effectiveTargetIndex = targetIndex;
+  if (selectedPrize && selectedPrize.id) {
+    const matchedIdx = activePrizes.findIndex((p) => p.id === selectedPrize.id);
+    if (matchedIdx !== -1) {
+      effectiveTargetIndex = matchedIdx;
+    }
+  }
+
+  // Align wheel slice to top pointer if already spun on load
   useEffect(() => {
-    if (isSpinning && targetIndex !== null && !isSpinningRef.current) {
+    if (!isSpinning && effectiveTargetIndex !== null && effectiveTargetIndex !== undefined && rotationDegree === 0) {
+      const segmentCenterAngle = effectiveTargetIndex * segmentAngle + segmentAngle / 2;
+      const alignAngle = (360 - segmentCenterAngle) % 360;
+      setRotationDegree(alignAngle);
+    }
+  }, [isSpinning, effectiveTargetIndex, segmentAngle, rotationDegree]);
+
+  // Handle spin triggering when targetIndex/selectedPrize is set and isSpinning becomes true
+  useEffect(() => {
+    if (isSpinning && effectiveTargetIndex !== null && effectiveTargetIndex !== undefined && !isSpinningRef.current) {
       isSpinningRef.current = true;
 
       // Calculate target rotation angle for exact segment alignment
-      const segmentCenterAngle = targetIndex * segmentAngle + segmentAngle / 2;
+      const segmentCenterAngle = effectiveTargetIndex * segmentAngle + segmentAngle / 2;
       
       // Angle needed to bring segmentCenterAngle to top pointer (0 deg / 360 deg)
       const alignAngle = (360 - segmentCenterAngle) % 360;

@@ -179,7 +179,16 @@ export const spinWheelService = async (
       body: JSON.stringify({ mobile: normalizedMobile }),
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    let data = null;
+
+    if (responseText && responseText.trim().length > 0) {
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseErr) {
+        console.warn("Non-JSON API response received:", responseText.slice(0, 200));
+      }
+    }
 
     if (response.ok && data && data.success) {
       // Cache result in localStorage for local UI convenience
@@ -204,14 +213,26 @@ export const spinWheelService = async (
         couponCode: data.couponCode,
         timestamp: data.timestamp,
       };
-    } else if (data && data.error) {
-      throw new Error(data.error);
+    }
+
+    // Handle application-level server errors (cooldown active, campaign disabled, etc.)
+    if (data && (data.error || data.message)) {
+      throw new Error(data.error || data.message);
+    }
+
+    // Handle unexpected non-200 responses (e.g. 500 HTML error page, 404, 504)
+    if (!response.ok) {
+      throw new Error(`Server returned HTTP ${response.status}. Please check server logs.`);
     }
   } catch (err) {
-    if (err.message && !err.message.includes("Unexpected token") && !err.message.includes("Failed to fetch")) {
+    if (
+      err.message &&
+      !err.message.includes("Unexpected end of JSON input") &&
+      !err.message.includes("Unexpected token") &&
+      !err.message.includes("Failed to fetch")
+    ) {
       throw err;
     }
-    // Fallback to local check only if fetch API endpoint itself failed to network reachability
   }
 
   // Fallback for offline / development testing without Cloud Functions deployed

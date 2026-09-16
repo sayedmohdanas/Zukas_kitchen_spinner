@@ -3,45 +3,67 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import fs from "fs";
 import path from "path";
 
-// Initialize Firebase Admin SDK safely for Vercel Serverless environment
-if (getApps().length === 0) {
-  let credential = null;
+/**
+ * Safely initializes Firebase Admin SDK in Vercel Serverless runtime
+ */
+function getAdminDb() {
+  if (getApps().length === 0) {
+    let credential = null;
 
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-    try {
-      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
-      credential = cert(sa);
-    } catch (e) {
-      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON env var:", e);
-    }
-  } else if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PROJECT_ID) {
-    const formattedPrivateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
-    credential = cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: formattedPrivateKey,
-    });
-  } else {
-    // Local development fallback using local serviceAccountKey.json if present
-    try {
-      const keyPath = path.resolve(process.cwd(), "serviceAccountKey.json");
-      if (fs.existsSync(keyPath)) {
-        const sa = JSON.parse(fs.readFileSync(keyPath, "utf8"));
+    // 1. Try FIREBASE_SERVICE_ACCOUNT_JSON environment variable
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+      try {
+        let raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON.trim();
+        if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith('"') && raw.endsWith('"'))) {
+          raw = raw.slice(1, -1);
+        }
+        const sa = JSON.parse(raw);
+        if (sa.private_key) {
+          sa.private_key = sa.private_key.replace(/\\n/g, "\n");
+        }
         credential = cert(sa);
+      } catch (e) {
+        console.error("FIREBASE_SERVICE_ACCOUNT_JSON parse error:", e.message);
       }
-    } catch (err) {
-      console.error("Local serviceAccountKey.json fallback error:", err);
+    }
+
+    // 2. Try individual FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, FIREBASE_PROJECT_ID
+    if (!credential && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PROJECT_ID) {
+      try {
+        const formattedPrivateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
+        credential = cert({
+          projectId: process.env.FIREBASE_PROJECT_ID.trim(),
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL.trim(),
+          privateKey: formattedPrivateKey,
+        });
+      } catch (e) {
+        console.error("FIREBASE_PRIVATE_KEY cert init error:", e.message);
+      }
+    }
+
+    // 3. Local development fallback using local serviceAccountKey.json
+    if (!credential) {
+      try {
+        const keyPath = path.resolve(process.cwd(), "serviceAccountKey.json");
+        if (fs.existsSync(keyPath)) {
+          const sa = JSON.parse(fs.readFileSync(keyPath, "utf8"));
+          if (sa.private_key) sa.private_key = sa.private_key.replace(/\\n/g, "\n");
+          credential = cert(sa);
+        }
+      } catch (err) {
+        console.error("Local serviceAccountKey.json fallback error:", err.message);
+      }
+    }
+
+    if (credential) {
+      initializeApp({ credential });
+    } else {
+      initializeApp();
     }
   }
 
-  if (credential) {
-    initializeApp({ credential });
-  } else {
-    initializeApp();
-  }
+  return getFirestore();
 }
-
-const db = getFirestore();
 
 // Server-approved 6 prizes with exact probability weights
 const SERVER_PRIZES = [
@@ -73,19 +95,27 @@ function generateServerCoupon(prize) {
 
 /**
  * Vercel Serverless Function handler for /api/spin
+ * Guarantees a JSON response on every code path.
  */
 export default async function handler(req, res) {
-  // Enforce HTTP POST
+  res.setHeader("Content-Type", "application/json");
+
+  // Enforce HTTP POST method
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
-    return res.status(405).json({ success: false, error: "Method Not Allowed" });
+    return res.status(405).json({
+      success: false,
+      error: "Method Not Allowed",
+      message: "Only POST requests are permitted."
+    });
   }
 
   try {
     const { mobile } = req.body || {};
     const normalizedMobile = normalizeMobile(mobile);
+    const db = getAdminDb();
 
-    // Run within atomic Firestore transaction to prevent race conditions & double-spins
+    // Execute atomic Firestore transaction
     const result = await db.runTransaction(async (transaction) => {
       // 1. Read campaigns/spin_and_win config
       const campaignRef = db.collection("campaigns").doc("spin_and_win");
@@ -228,9 +258,11 @@ export default async function handler(req, res) {
     return res.status(200).json(result);
 
   } catch (err) {
+    const errorMsg = err.message || "An error occurred while processing your spin.";
     return res.status(400).json({
       success: false,
-      error: err.message || "An error occurred while processing your spin.",
+      error: errorMsg,
+      message: errorMsg,
     });
   }
 }

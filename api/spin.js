@@ -3,114 +3,121 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import fs from "fs";
 import path from "path";
 
-const DEFAULT_PROJECT_ID = "zukas-kitchen-spin-win";
+const EXPECTED_PROJECT_ID = "zukas-kitchen-spin-win";
 
 /**
- * Safely initializes Firebase Admin SDK in Vercel Serverless runtime
+ * Safely initializes Firebase Admin SDK in Vercel Serverless runtime.
+ * Never attempts Google Ambient Auth / Metadata Server auto-detection.
  */
 function getAdminDb() {
   const existingApps = getApps();
-  let app;
-
   if (existingApps.length > 0) {
-    app = existingApps[0];
-  } else {
-    let credential = null;
-    let projectId = process.env.FIREBASE_PROJECT_ID ? process.env.FIREBASE_PROJECT_ID.trim() : DEFAULT_PROJECT_ID;
-
-    // 1. Try FIREBASE_SERVICE_ACCOUNT_JSON or common alias environment variables
-    const saJsonEnv =
-      process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
-      process.env.FIREBASE_SERVICE_ACCOUNT ||
-      process.env.FIREBASE_SERVICE_ACCOUNT_KEY ||
-      process.env.FIREBASE_CREDENTIALS ||
-      process.env.FIREBASE_ADMIN_CREDENTIALS ||
-      process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-
-    if (saJsonEnv) {
-      try {
-        let raw = saJsonEnv.trim();
-        // Remove surrounding single or double quotes if present
-        if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith('"') && raw.endsWith('"'))) {
-          raw = raw.slice(1, -1);
-        }
-        // Handle Base64 encoded JSON string if provided
-        if (!raw.startsWith("{") && !raw.startsWith("[")) {
-          try {
-            const decoded = Buffer.from(raw, "base64").toString("utf8");
-            if (decoded.trim().startsWith("{")) {
-              raw = decoded;
-            }
-          } catch (b64Err) {
-            // Ignore base64 error
-          }
-        }
-
-        const sa = JSON.parse(raw);
-        if (sa.private_key) {
-          sa.private_key = sa.private_key.replace(/\\n/g, "\n");
-        }
-        if (sa.project_id) {
-          projectId = sa.project_id.trim();
-        }
-        credential = cert(sa);
-      } catch (e) {
-        console.error("[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_JSON parse error:", e.message);
-      }
-    }
-
-    // 2. Try individual env vars (FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, FIREBASE_PROJECT_ID)
-    if (!credential && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
-      try {
-        const formattedPrivateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
-        credential = cert({
-          projectId: projectId,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL.trim(),
-          privateKey: formattedPrivateKey,
-        });
-      } catch (e) {
-        console.error("[Firebase Admin] FIREBASE_PRIVATE_KEY cert init error:", e.message);
-      }
-    }
-
-    // 3. Local development fallback using local serviceAccountKey.json
-    if (!credential) {
-      try {
-        const keyPath = path.resolve(process.cwd(), "serviceAccountKey.json");
-        if (fs.existsSync(keyPath)) {
-          const sa = JSON.parse(fs.readFileSync(keyPath, "utf8"));
-          if (sa.private_key) sa.private_key = sa.private_key.replace(/\\n/g, "\n");
-          if (sa.project_id) projectId = sa.project_id.trim();
-          credential = cert(sa);
-        }
-      } catch (err) {
-        console.error("[Firebase Admin] Local serviceAccountKey.json fallback error:", err.message);
-      }
-    }
-
-    if (!credential) {
-      console.log("[Firebase Admin Safe Diagnostics]", {
-        FIREBASE_SERVICE_ACCOUNT_JSON_present: Boolean(saJsonEnv),
-        FIREBASE_PRIVATE_KEY_present: Boolean(process.env.FIREBASE_PRIVATE_KEY),
-        FIREBASE_CLIENT_EMAIL_present: Boolean(process.env.FIREBASE_CLIENT_EMAIL),
-        projectId: projectId,
-        initialized: false,
-      });
-
-      throw new Error("Server configuration error: FIREBASE_SERVICE_ACCOUNT_JSON environment variable is missing in Vercel settings.");
-    }
-
-    console.log("[Firebase Admin Safe Diagnostics]", {
-      FIREBASE_SERVICE_ACCOUNT_JSON_present: Boolean(saJsonEnv),
-      projectId: projectId,
-      initialized: true,
-    });
-
-    app = initializeApp({
-      credential,
-      projectId: projectId,
-    });
+    return getFirestore(existingApps[0]);
   }
+
+  let credential = null;
+  let projectId = EXPECTED_PROJECT_ID;
+  let hasServiceAccountJson = false;
+
+  // 1. Read FIREBASE_SERVICE_ACCOUNT_JSON from environment
+  const rawSa =
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
+    process.env.FIREBASE_SERVICE_ACCOUNT ||
+    process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+
+  if (rawSa) {
+    hasServiceAccountJson = true;
+    try {
+      let cleaned = rawSa.trim();
+      // Strip outer single or double quotes if present
+      if ((cleaned.startsWith("'") && cleaned.endsWith("'")) || (cleaned.startsWith('"') && cleaned.endsWith('"'))) {
+        cleaned = cleaned.slice(1, -1);
+      }
+
+      const sa = JSON.parse(cleaned);
+
+      if (sa.project_id) {
+        projectId = sa.project_id.trim();
+      }
+
+      const clientEmail = sa.client_email ? sa.client_email.trim() : undefined;
+      const privateKey = sa.private_key ? sa.private_key.replace(/\\n/g, "\n") : undefined;
+
+      if (projectId && clientEmail && privateKey) {
+        credential = cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        });
+      }
+    } catch (e) {
+      console.error("[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_JSON JSON parse error:", e.message);
+    }
+  }
+
+  // 2. Try individual env vars fallback
+  if (!credential && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+    try {
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL.trim();
+      if (process.env.FIREBASE_PROJECT_ID) {
+        projectId = process.env.FIREBASE_PROJECT_ID.trim();
+      }
+      credential = cert({
+        projectId,
+        clientEmail,
+        privateKey,
+      });
+    } catch (e) {
+      console.error("[Firebase Admin] FIREBASE_PRIVATE_KEY cert init error:", e.message);
+    }
+  }
+
+  // 3. Local filesystem fallback for dev testing ONLY (serviceAccountKey.json)
+  if (!credential) {
+    try {
+      const keyPath = path.resolve(process.cwd(), "serviceAccountKey.json");
+      if (fs.existsSync(keyPath)) {
+        const sa = JSON.parse(fs.readFileSync(keyPath, "utf8"));
+        if (sa.project_id) projectId = sa.project_id.trim();
+        const clientEmail = sa.client_email ? sa.client_email.trim() : undefined;
+        const privateKey = sa.private_key ? sa.private_key.replace(/\\n/g, "\n") : undefined;
+        if (projectId && clientEmail && privateKey) {
+          credential = cert({
+            projectId,
+            clientEmail,
+            privateKey,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("[Firebase Admin] Local serviceAccountKey.json fallback error:", err.message);
+    }
+  }
+
+  // Safe diagnostics (NEVER log private key or secret values)
+  console.log("[Firebase Admin Diagnostics]", {
+    hasServiceAccountJson,
+    parsedProjectId: projectId,
+    projectIdMatchesExpected: projectId === EXPECTED_PROJECT_ID,
+    credentialInitialized: Boolean(credential),
+  });
+
+  if (!credential) {
+    throw new Error(
+      "Server configuration error: FIREBASE_SERVICE_ACCOUNT_JSON environment variable is missing or invalid in Vercel settings."
+    );
+  }
+
+  // Set explicit GCP Project environment variables so Google Auth library never attempts ambient metadata server detection
+  process.env.GCLOUD_PROJECT = projectId;
+  process.env.GOOGLE_CLOUD_PROJECT = projectId;
+  process.env.GCP_PROJECT = projectId;
+
+  const app = initializeApp({
+    credential,
+    projectId,
+  });
 
   return getFirestore(app);
 }

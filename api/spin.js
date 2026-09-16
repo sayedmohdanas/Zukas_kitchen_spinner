@@ -3,41 +3,66 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import fs from "fs";
 import path from "path";
 
+const DEFAULT_PROJECT_ID = "zukas-kitchen-spin-win";
+
 /**
  * Safely initializes Firebase Admin SDK in Vercel Serverless runtime
  */
 function getAdminDb() {
-  if (getApps().length === 0) {
+  const existingApps = getApps();
+  let app;
+
+  if (existingApps.length > 0) {
+    app = existingApps[0];
+  } else {
     let credential = null;
+    let projectId = process.env.FIREBASE_PROJECT_ID ? process.env.FIREBASE_PROJECT_ID.trim() : DEFAULT_PROJECT_ID;
 
     // 1. Try FIREBASE_SERVICE_ACCOUNT_JSON environment variable
-    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    const saJsonEnv = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    if (saJsonEnv) {
       try {
-        let raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON.trim();
+        let raw = saJsonEnv.trim();
+        // Remove surrounding single or double quotes
         if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith('"') && raw.endsWith('"'))) {
           raw = raw.slice(1, -1);
         }
+        // Handle Base64 encoded JSON string if provided
+        if (!raw.startsWith("{") && !raw.startsWith("[")) {
+          try {
+            const decoded = Buffer.from(raw, "base64").toString("utf8");
+            if (decoded.trim().startsWith("{")) {
+              raw = decoded;
+            }
+          } catch (b64Err) {
+            // Ignore base64 error
+          }
+        }
+
         const sa = JSON.parse(raw);
         if (sa.private_key) {
           sa.private_key = sa.private_key.replace(/\\n/g, "\n");
         }
+        if (sa.project_id) {
+          projectId = sa.project_id.trim();
+        }
         credential = cert(sa);
       } catch (e) {
-        console.error("FIREBASE_SERVICE_ACCOUNT_JSON parse error:", e.message);
+        console.error("[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_JSON parse error:", e.message);
       }
     }
 
-    // 2. Try individual FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, FIREBASE_PROJECT_ID
-    if (!credential && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PROJECT_ID) {
+    // 2. Try individual env vars (FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, FIREBASE_PROJECT_ID)
+    if (!credential && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
       try {
         const formattedPrivateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
         credential = cert({
-          projectId: process.env.FIREBASE_PROJECT_ID.trim(),
+          projectId: projectId,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL.trim(),
           privateKey: formattedPrivateKey,
         });
       } catch (e) {
-        console.error("FIREBASE_PRIVATE_KEY cert init error:", e.message);
+        console.error("[Firebase Admin] FIREBASE_PRIVATE_KEY cert init error:", e.message);
       }
     }
 
@@ -48,21 +73,26 @@ function getAdminDb() {
         if (fs.existsSync(keyPath)) {
           const sa = JSON.parse(fs.readFileSync(keyPath, "utf8"));
           if (sa.private_key) sa.private_key = sa.private_key.replace(/\\n/g, "\n");
+          if (sa.project_id) projectId = sa.project_id.trim();
           credential = cert(sa);
         }
       } catch (err) {
-        console.error("Local serviceAccountKey.json fallback error:", err.message);
+        console.error("[Firebase Admin] Local serviceAccountKey.json fallback error:", err.message);
       }
     }
 
-    if (credential) {
-      initializeApp({ credential });
-    } else {
-      initializeApp();
+    if (!credential) {
+      console.error("[Firebase Admin] CRITICAL: No service account credential could be initialized.");
+      throw new Error("Server configuration error.");
     }
+
+    app = initializeApp({
+      credential,
+      projectId: projectId,
+    });
   }
 
-  return getFirestore();
+  return getFirestore(app);
 }
 
 // Server-approved 6 prizes with exact probability weights

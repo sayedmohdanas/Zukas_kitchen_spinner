@@ -18,12 +18,19 @@ function getAdminDb() {
     let credential = null;
     let projectId = process.env.FIREBASE_PROJECT_ID ? process.env.FIREBASE_PROJECT_ID.trim() : DEFAULT_PROJECT_ID;
 
-    // 1. Try FIREBASE_SERVICE_ACCOUNT_JSON environment variable
-    const saJsonEnv = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    // 1. Try FIREBASE_SERVICE_ACCOUNT_JSON or common alias environment variables
+    const saJsonEnv =
+      process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
+      process.env.FIREBASE_SERVICE_ACCOUNT ||
+      process.env.FIREBASE_SERVICE_ACCOUNT_KEY ||
+      process.env.FIREBASE_CREDENTIALS ||
+      process.env.FIREBASE_ADMIN_CREDENTIALS ||
+      process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+
     if (saJsonEnv) {
       try {
         let raw = saJsonEnv.trim();
-        // Remove surrounding single or double quotes
+        // Remove surrounding single or double quotes if present
         if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith('"') && raw.endsWith('"'))) {
           raw = raw.slice(1, -1);
         }
@@ -82,9 +89,22 @@ function getAdminDb() {
     }
 
     if (!credential) {
-      console.error("[Firebase Admin] CRITICAL: No service account credential could be initialized.");
-      throw new Error("Server configuration error.");
+      console.log("[Firebase Admin Safe Diagnostics]", {
+        FIREBASE_SERVICE_ACCOUNT_JSON_present: Boolean(saJsonEnv),
+        FIREBASE_PRIVATE_KEY_present: Boolean(process.env.FIREBASE_PRIVATE_KEY),
+        FIREBASE_CLIENT_EMAIL_present: Boolean(process.env.FIREBASE_CLIENT_EMAIL),
+        projectId: projectId,
+        initialized: false,
+      });
+
+      throw new Error("Server configuration error: FIREBASE_SERVICE_ACCOUNT_JSON environment variable is missing in Vercel settings.");
     }
+
+    console.log("[Firebase Admin Safe Diagnostics]", {
+      FIREBASE_SERVICE_ACCOUNT_JSON_present: Boolean(saJsonEnv),
+      projectId: projectId,
+      initialized: true,
+    });
 
     app = initializeApp({
       credential,

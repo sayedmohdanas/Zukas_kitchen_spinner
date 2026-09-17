@@ -91,7 +91,7 @@ function normalizeMobile(mobile) {
 
 /**
  * Vercel Serverless Function handler for /api/claim
- * Attaches normalized mobile number to an existing spin record and enforces server-side cooldown duplicate checks.
+ * Attaches normalized mobile number to an existing spin record or returns existing active coupon if within cooldown.
  */
 export default async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");
@@ -143,48 +143,71 @@ export default async function handler(req, res) {
         throw new Error("Spin & Win is currently closed. Please check back soon! ❤️");
       }
 
-      // 2. Query prior claimed spins for this mobile number to enforce server-side cooldown
+      // 2. Query prior claimed spins for this mobile number
       const spinsRef = db.collection("spins");
       const existingSpinsQuery = spinsRef.where("mobile", "==", normalizedMobile);
       const existingSpinsSnap = await transaction.get(existingSpinsQuery);
 
       if (!existingSpinsSnap.empty) {
         let latestTimeMs = 0;
+        let latestClaimedSpin = null;
+
         existingSpinsSnap.forEach((docSnap) => {
           // Ignore current spin if it already has this mobile
           if (docSnap.id === spinId) return;
 
           const d = docSnap.data();
           let ms = 0;
-          if (d.createdAt && typeof d.createdAt.toMillis === "function") {
-            ms = d.createdAt.toMillis();
-          } else if (d.createdAt && d.createdAt.seconds) {
-            ms = d.createdAt.seconds * 1000;
-          } else if (typeof d.createdAt === "number") {
-            ms = d.createdAt;
-          } else if (d.createdAt) {
-            ms = new Date(d.createdAt).getTime();
+          const timeField = d.claimedAt || d.createdAt;
+          if (timeField && typeof timeField.toMillis === "function") {
+            ms = timeField.toMillis();
+          } else if (timeField && timeField.seconds) {
+            ms = timeField.seconds * 1000;
+          } else if (typeof timeField === "number") {
+            ms = timeField;
+          } else if (timeField) {
+            ms = new Date(timeField).getTime();
           }
-          if (ms > latestTimeMs) latestTimeMs = ms;
+
+          if (ms > latestTimeMs) {
+            latestTimeMs = ms;
+            latestClaimedSpin = {
+              spinId: docSnap.id,
+              ...d,
+              timestampMs: ms,
+            };
+          }
         });
 
-        if (latestTimeMs > 0) {
-          if (!campaignConfig.repeatEnabled) {
-            throw new Error("You have already used your Spin & Win chance for this mobile number.");
-          }
-
-          const cooldownMs = campaignConfig.repeatAfterDays * 24 * 60 * 60 * 1000;
+        if (latestClaimedSpin && latestTimeMs > 0) {
+          const cooldownMs = (campaignConfig.repeatAfterDays || 2) * 24 * 60 * 60 * 1000;
           const nextEligibleTime = latestTimeMs + cooldownMs;
           const nowMs = Date.now();
 
-          if (nowMs < nextEligibleTime) {
-            const diffDays = Math.ceil((nextEligibleTime - nowMs) / (24 * 60 * 60 * 1000));
-            const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
-            const message = diffDays > 1
-              ? `A coupon has already been claimed for this number. Next spin available in ${diffDays} days (on ${formattedDate}).`
-              : `A coupon has already been claimed for this number. Next spin available tomorrow (on ${formattedDate}).`;
+          const isBlockedByCooldown = !campaignConfig.repeatEnabled || (nowMs < nextEligibleTime);
 
-            throw new Error(message);
+          if (isBlockedByCooldown) {
+            const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+            });
+            const availableAgainIso = campaignConfig.repeatEnabled ? new Date(nextEligibleTime).toISOString() : null;
+
+            // Return existing active coupon info WITHOUT updating or claiming the new pending spin
+            return {
+              success: false,
+              code: "EXISTING_COUPON",
+              message: "You already have an active coupon!",
+              existingCoupon: {
+                spinId: latestClaimedSpin.spinId,
+                couponCode: latestClaimedSpin.couponCode || null,
+                prizeName: latestClaimedSpin.prizeName || latestClaimedSpin.prizeId || "Spin & Win Offer",
+                name: latestClaimedSpin.name || null,
+                claimedAt: new Date(latestTimeMs).toISOString(),
+                availableAgainAt: availableAgainIso,
+                availableAgainFormatted: campaignConfig.repeatEnabled ? formattedDate : null,
+              },
+            };
           }
         }
       }

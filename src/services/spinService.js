@@ -304,6 +304,10 @@ export const claimCouponService = async (spinId, mobileNumber) => {
     }
   }
 
+  if (data && data.code === "EXISTING_COUPON") {
+    return data;
+  }
+
   if (response.ok && data && data.success) {
     // Cache successful claim in localStorage for UX convenience
     try {

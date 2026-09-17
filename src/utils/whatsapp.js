@@ -5,17 +5,23 @@ import { config } from "../config/config";
  * 
  * @param {object|null} prize 
  * @param {string|null} couponCode 
+ * @param {string|null} userName 
  * @returns {string}
  */
-export const getWhatsAppOrderLink = (prize = null, couponCode = null) => {
+export const getWhatsAppOrderLink = (prize = null, couponCode = null, userName = null) => {
   const number = config.whatsappNumber;
+
+  let greeting = "Hi Zukas Kitchen! 🍕";
+  if (userName && userName.trim().length > 0) {
+    greeting = `Hi Zukas Kitchen! I'm ${userName.trim()} 🍕`;
+  }
 
   let messageText = "";
 
   if (prize && prize.isWinningPrize && couponCode) {
-    messageText = `Hi Zukas Kitchen! 🍕\n\nI won the Spin & Win offer 🎉\n\nOffer: ${prize.label}\nCoupon Code: ${couponCode}\n\nI'd like to place an order.`;
+    messageText = `${greeting}\n\nI won the Spin & Win offer 🎉\n\nOffer: ${prize.label}\nCoupon Code: ${couponCode}\n\nI'd like to place an order.`;
   } else {
-    messageText = `Hi Zukas Kitchen! 🍕\n\nI'd like to place an order.`;
+    messageText = `${greeting}\n\nI'd like to place an order.`;
   }
 
   const encodedMessage = encodeURIComponent(messageText);

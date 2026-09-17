@@ -168,8 +168,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { mobile } = req.body || {};
-    const normalizedMobile = normalizeMobile(mobile);
+    const { name, mobile } = req.body || {};
+
+    const trimmedName = String(name || "").trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      return res.status(400).json({
+        success: false,
+        error: "Please enter your name (at least 2 characters).",
+      });
+    }
+    if (trimmedName.length > 50) {
+      return res.status(400).json({
+        success: false,
+        error: "Name must be 50 characters or less.",
+      });
+    }
+
+    let normalizedMobile = null;
+    if (mobile && String(mobile).trim().length > 0) {
+      normalizedMobile = normalizeMobile(mobile);
+    }
+
     const db = getAdminDb();
 
     // Execute atomic Firestore transaction
@@ -197,44 +216,46 @@ export default async function handler(req, res) {
         throw new Error("Spin & Win is currently closed. Please check back soon! ❤️");
       }
 
-      // 2. Query user's prior spins inside transaction
+      // 2. Query user's prior spins inside transaction IF mobile is provided
       const spinsRef = db.collection("spins");
-      const existingSpinsQuery = spinsRef.where("mobile", "==", normalizedMobile);
-      const existingSpinsSnap = await transaction.get(existingSpinsQuery);
+      if (normalizedMobile) {
+        const existingSpinsQuery = spinsRef.where("mobile", "==", normalizedMobile);
+        const existingSpinsSnap = await transaction.get(existingSpinsQuery);
 
-      if (!existingSpinsSnap.empty) {
-        let latestTimeMs = 0;
-        existingSpinsSnap.forEach((docSnap) => {
-          const d = docSnap.data();
-          let ms = 0;
-          if (d.createdAt && typeof d.createdAt.toMillis === "function") {
-            ms = d.createdAt.toMillis();
-          } else if (d.createdAt && d.createdAt.seconds) {
-            ms = d.createdAt.seconds * 1000;
-          } else if (typeof d.createdAt === "number") {
-            ms = d.createdAt;
-          } else if (d.createdAt) {
-            ms = new Date(d.createdAt).getTime();
+        if (!existingSpinsSnap.empty) {
+          let latestTimeMs = 0;
+          existingSpinsSnap.forEach((docSnap) => {
+            const d = docSnap.data();
+            let ms = 0;
+            if (d.createdAt && typeof d.createdAt.toMillis === "function") {
+              ms = d.createdAt.toMillis();
+            } else if (d.createdAt && d.createdAt.seconds) {
+              ms = d.createdAt.seconds * 1000;
+            } else if (typeof d.createdAt === "number") {
+              ms = d.createdAt;
+            } else if (d.createdAt) {
+              ms = new Date(d.createdAt).getTime();
+            }
+            if (ms > latestTimeMs) latestTimeMs = ms;
+          });
+
+          if (!campaignConfig.repeatEnabled) {
+            throw new Error("You have already used your Spin & Win chance.");
           }
-          if (ms > latestTimeMs) latestTimeMs = ms;
-        });
 
-        if (!campaignConfig.repeatEnabled) {
-          throw new Error("You have already used your Spin & Win chance.");
-        }
+          const cooldownMs = campaignConfig.repeatAfterDays * 24 * 60 * 60 * 1000;
+          const nextEligibleTime = latestTimeMs + cooldownMs;
+          const nowMs = Date.now();
 
-        const cooldownMs = campaignConfig.repeatAfterDays * 24 * 60 * 60 * 1000;
-        const nextEligibleTime = latestTimeMs + cooldownMs;
-        const nowMs = Date.now();
+          if (nowMs < nextEligibleTime) {
+            const diffDays = Math.ceil((nextEligibleTime - nowMs) / (24 * 60 * 60 * 1000));
+            const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+            const message = diffDays > 1
+              ? `Your next spin is available in ${diffDays} days (on ${formattedDate}).`
+              : `Your next spin is available tomorrow (on ${formattedDate}).`;
 
-        if (nowMs < nextEligibleTime) {
-          const diffDays = Math.ceil((nextEligibleTime - nowMs) / (24 * 60 * 60 * 1000));
-          const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
-          const message = diffDays > 1
-            ? `Your next spin is available in ${diffDays} days (on ${formattedDate}).`
-            : `Your next spin is available tomorrow (on ${formattedDate}).`;
-
-          throw new Error(message);
+            throw new Error(message);
+          }
         }
       }
 
@@ -294,11 +315,13 @@ export default async function handler(req, res) {
       // 6. Write new spin document in Firestore using trusted admin credentials and server timestamp
       const newSpinRef = spinsRef.doc();
       transaction.set(newSpinRef, {
+        name: trimmedName,
         mobile: normalizedMobile,
         prizeId: selectedPrize.id,
         prizeName: selectedPrize.label || selectedPrize.name,
         couponCode,
         campaignId: "spin_and_win",
+        status: normalizedMobile ? "claimed" : "pending_claim",
         createdAt: FieldValue.serverTimestamp(),
       });
 

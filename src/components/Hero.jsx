@@ -1,13 +1,13 @@
 import React from "react";
 import Spinner from "./Spinner";
-import MobileNumberForm from "./MobileNumberForm";
+import NameInputForm from "./NameInputForm";
 import SpinButton from "./SpinButton";
 import { Sparkles, Pizza, ShieldCheck, Heart, Clock, Award } from "lucide-react";
 import { config } from "../config/config";
 
 export default function Hero({
-  mobileNumber,
-  setMobileNumber,
+  userName,
+  setUserName,
   error,
   setError,
   isSpinning,
@@ -43,7 +43,7 @@ export default function Hero({
           </h1>
 
           <p className="hero-description">
-            Your next pizza might come with a surprise discount! 🎉 Enter your mobile number, spin the wheel, and unlock guaranteed delicious rewards instantly.
+            Your next pizza might come with a surprise discount! 🎉 Enter your name to start, spin the wheel, and unlock delicious rewards instantly.
           </p>
 
           {/* Benefit Pills */}
@@ -84,14 +84,14 @@ export default function Hero({
                 <div className="already-spun-header">
                   <ShieldCheck size={24} className="spun-check-icon" />
                   <div>
-                    <h3>You've Already Spun!</h3>
-                    <p>Each customer gets 1 spin per campaign session.</p>
+                    <h3>You've Spun The Wheel!</h3>
+                    <p>View your reward details or claim your coupon below.</p>
                   </div>
                 </div>
 
                 {sessionPrize && (
                   <div className="spun-summary-box">
-                    <span className="summary-label">Your Winning Reward:</span>
+                    <span className="summary-label">Your Reward:</span>
                     <span className="summary-prize">{sessionPrize.label}</span>
                     {sessionCoupon && (
                       <div className="summary-code-badge">
@@ -112,9 +112,9 @@ export default function Hero({
               </div>
             ) : (
               <>
-                <MobileNumberForm
-                  mobileNumber={mobileNumber}
-                  setMobileNumber={setMobileNumber}
+                <NameInputForm
+                  userName={userName}
+                  setUserName={setUserName}
                   error={error}
                   setError={setError}
                   disabled={isSpinning || !campaignEnabled}

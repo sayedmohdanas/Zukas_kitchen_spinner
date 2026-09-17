@@ -9,17 +9,20 @@ import ResultModal from "./components/ResultModal";
 import TermsModal from "./components/TermsModal";
 import Footer from "./components/Footer";
 import FloatingWhatsAppCTA from "./components/FloatingWhatsAppCTA";
-import { spinWheelService, checkSpinEligibility } from "./services/spinService";
+import { spinWheelService } from "./services/spinService";
 import { fetchCampaignConfig, fetchPrizesFromFirestore, DEFAULT_PRIZES, DEFAULT_CAMPAIGN_CONFIG } from "./services/firebasePrizeService";
 import { trackEvent } from "./utils/analytics";
 
 export default function App() {
-  const [mobileNumber, setMobileNumber] = useState("");
+  const [userName, setUserName] = useState("");
   const [error, setError] = useState("");
   const [isSpinning, setIsSpinning] = useState(false);
   const [targetIndex, setTargetIndex] = useState(null);
   const [selectedPrize, setSelectedPrize] = useState(null);
   const [couponCode, setCouponCode] = useState(null);
+  const [spinId, setSpinId] = useState(null);
+  const [isClaimed, setIsClaimed] = useState(false);
+  const [claimedMobile, setClaimedMobile] = useState(null);
   const [showResult, setShowResult] = useState(false);
   const [hasSpun, setHasSpun] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -68,38 +71,27 @@ export default function App() {
       return;
     }
 
-    // Mobile validation: strictly 10 digits
-    const cleanNumber = mobileNumber.trim();
-    if (!cleanNumber || cleanNumber.length !== 10 || !/^\d{10}$/.test(cleanNumber)) {
-      setError("Please enter a valid 10-digit mobile number.");
-      trackEvent("validation_error", { input: cleanNumber });
+    // Name validation: Trimmed, min 2 chars, max 50 chars
+    const trimmed = String(userName || "").trim();
+    if (!trimmed || trimmed.length < 2) {
+      setError("Please enter your name (at least 2 characters).");
+      trackEvent("validation_error", { input: userName });
+      return;
+    }
+    if (trimmed.length > 50) {
+      setError("Name must be 50 characters or less.");
+      trackEvent("validation_error", { input: userName });
       return;
     }
 
     setError("");
     setIsSpinning(true);
-    trackEvent("spin_started", { mobile: cleanNumber });
+    trackEvent("spin_started", { name: trimmed });
 
     try {
-      // Check eligibility based on Firestore rule & campaign repeat config
-      const eligibility = await checkSpinEligibility(cleanNumber, campaignConfig);
-
-      if (!eligibility.eligible) {
-        setIsSpinning(false);
-        setError(eligibility.message || "You are not eligible to spin at this time.");
-
-        if (eligibility.latestSpin) {
-          const matchPrize = prizesList.find(
-            p => p.label === eligibility.latestSpin.prizeName || p.id === eligibility.latestSpin.prizeId
-          ) || prizesList[0];
-          setSelectedPrize(matchPrize);
-          setCouponCode(eligibility.latestSpin.couponCode || null);
-        }
-        return;
-      }
-
-      // Execute spin using Firebase active prizes
-      const result = await spinWheelService(cleanNumber, prizesList, campaignConfig);
+      // Execute spin on server with name (mobile collected after win)
+      const result = await spinWheelService(trimmed, null, prizesList, campaignConfig);
+      setSpinId(result.spinId);
       setTargetIndex(result.prizeIndex);
       setSelectedPrize(result.prize);
       setCouponCode(result.couponCode);
@@ -113,7 +105,16 @@ export default function App() {
     setIsSpinning(false);
     setHasSpun(true);
     setShowResult(true);
-    trackEvent("spin_completed", { prize: selectedPrize?.label });
+    trackEvent("spin_completed", { prize: selectedPrize?.label, name: userName });
+  };
+
+  const handleClaimSuccess = ({ mobile, couponCode: updatedCode }) => {
+    setIsClaimed(true);
+    setClaimedMobile(mobile);
+    if (updatedCode) {
+      setCouponCode(updatedCode);
+    }
+    trackEvent("coupon_claimed", { mobile, prize: selectedPrize?.label });
   };
 
   return (
@@ -125,8 +126,8 @@ export default function App() {
       <main className="main-content-body">
         {/* Hero Section with Form and Interactive Spinner */}
         <Hero
-          mobileNumber={mobileNumber}
-          setMobileNumber={setMobileNumber}
+          userName={userName}
+          setUserName={setUserName}
           error={error}
           setError={setError}
           isSpinning={isSpinning}
@@ -171,6 +172,11 @@ export default function App() {
         <ResultModal
           prize={selectedPrize}
           couponCode={couponCode}
+          userName={userName}
+          spinId={spinId}
+          isClaimed={isClaimed}
+          claimedMobile={claimedMobile}
+          onClaimSuccess={handleClaimSuccess}
           onClose={() => setShowResult(false)}
         />
       )}

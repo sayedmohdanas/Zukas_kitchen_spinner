@@ -1797,3 +1797,76 @@ a {
     font-size: 14px;
   }
 }
+
+/* ==========================================================================
+   CLAIM COUPON FORM & SUCCESS STYLES
+   ========================================================================== */
+.claim-coupon-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  text-align: left;
+  background: var(--zukas-surface);
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--zukas-border);
+}
+
+.claim-form-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--zukas-dark);
+}
+
+.modal-claim-coupon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #198C09 0%, #126306 100%);
+  color: #FFF;
+  padding: 12px 18px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 14px rgba(25, 140, 9, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  cursor: pointer;
+  border: none;
+}
+
+.modal-claim-coupon-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(25, 140, 9, 0.45);
+}
+
+.modal-claim-coupon-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.coupon-claimed-success-box {
+  background: rgba(25, 140, 9, 0.08);
+  border: 1.5px solid var(--zukas-green);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.claimed-success-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--zukas-green);
+  font-weight: 800;
+  font-size: 13px;
+  text-align: center;
+}
+

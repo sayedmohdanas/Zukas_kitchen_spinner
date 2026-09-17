@@ -164,19 +164,40 @@ export const checkSpinEligibility = async (mobile, campaignConfig = DEFAULT_CAMP
  * @param {object} campaignConfig 
  * @returns {Promise<{prize: object, prizeIndex: number, couponCode: string|null, timestamp: string}>}
  */
+/**
+ * Server-Authoritative Spin Service
+ * 
+ * Invokes the trusted Vercel Serverless Function `/api/spin` to execute server-side
+ * weighted prize selection, server coupon generation, and initial spin document creation.
+ * 
+ * @param {string} name 
+ * @param {string|null} mobileNumber 
+ * @param {Array<object>} availablePrizes 
+ * @param {object} campaignConfig 
+ * @returns {Promise<{spinId: string, prize: object, prizeIndex: number, couponCode: string|null, timestamp: string}>}
+ */
 export const spinWheelService = async (
-  mobileNumber,
+  name,
+  mobileNumber = null,
   availablePrizes = localPrizes,
   campaignConfig = DEFAULT_CAMPAIGN_CONFIG
 ) => {
-  const normalizedMobile = normalizeMobileNumber(mobileNumber);
+  const trimmedName = String(name || "").trim();
+  if (!trimmedName || trimmedName.length < 2) {
+    throw new Error("Please enter your name (at least 2 characters).");
+  }
+
+  const payload = { name: trimmedName };
+  if (mobileNumber && String(mobileNumber).trim().length > 0) {
+    payload.mobile = normalizeMobileNumber(mobileNumber);
+  }
 
   // Invoke Vercel Serverless Function /api/spin for server-authoritative spin execution
   try {
     const response = await fetch("/api/spin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mobile: normalizedMobile }),
+      body: JSON.stringify(payload),
     });
 
     const responseText = await response.text();
@@ -191,23 +212,8 @@ export const spinWheelService = async (
     }
 
     if (response.ok && data && data.success) {
-      // Cache result in localStorage for local UI convenience
-      try {
-        localStorage.setItem(
-          `zukas_spin_${normalizedMobile}`,
-          JSON.stringify({
-            mobile: normalizedMobile,
-            prizeId: data.prize.id,
-            prizeName: data.prize.label || data.prize.name,
-            couponCode: data.couponCode,
-            createdAt: data.timestamp,
-          })
-        );
-      } catch (e) {
-        // Ignore storage error
-      }
-
       return {
+        spinId: data.spinId,
         prize: data.prize,
         prizeIndex: data.prizeIndex,
         couponCode: data.couponCode,
@@ -215,12 +221,12 @@ export const spinWheelService = async (
       };
     }
 
-    // Handle application-level server errors (cooldown active, campaign disabled, etc.)
+    // Handle application-level server errors (campaign disabled, etc.)
     if (data && (data.error || data.message)) {
       throw new Error(data.error || data.message);
     }
 
-    // Handle unexpected non-200 responses (e.g. 500 HTML error page, 404, 504)
+    // Handle unexpected non-200 responses
     if (!response.ok) {
       throw new Error(`Server returned HTTP ${response.status}. Please check server logs.`);
     }
@@ -235,13 +241,7 @@ export const spinWheelService = async (
     }
   }
 
-  // Fallback for offline / development testing without Cloud Functions deployed
-  const eligibility = await checkSpinEligibility(mobileNumber, campaignConfig);
-  if (!eligibility.eligible) {
-    throw new Error(eligibility.message || "You are not eligible to spin at this time.");
-  }
-
-  // Filter active prizes
+  // Fallback for offline / development testing without Vercel API deployed
   const eligiblePrizes = availablePrizes
     .map((prize, originalIndex) => ({ ...prize, originalIndex }))
     .filter((p) => p.enabled !== false);
@@ -263,9 +263,70 @@ export const spinWheelService = async (
   const couponCode = selectedItem.isWinningPrize ? `${couponPrefix}DEMO` : null;
 
   return {
+    spinId: `local_${Date.now()}`,
     prize: availablePrizes[actualPrizeIndex],
     prizeIndex: actualPrizeIndex,
     couponCode,
     timestamp: new Date().toISOString(),
   };
+};
+
+/**
+ * Server-Authoritative Coupon Claim Service
+ * 
+ * Invokes `/api/claim` to associate a normalized mobile number with an existing spin record
+ * and enforce server-side cooldown duplicate checks.
+ * 
+ * @param {string} spinId 
+ * @param {string} mobileNumber 
+ * @returns {Promise<{success: boolean, spinId: string, mobile: string, couponCode: string, prizeName: string, message: string}>}
+ */
+export const claimCouponService = async (spinId, mobileNumber) => {
+  const normalizedMobile = normalizeMobileNumber(mobileNumber);
+
+  const response = await fetch("/api/claim", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      spinId,
+      mobile: normalizedMobile,
+    }),
+  });
+
+  const responseText = await response.text();
+  let data = null;
+
+  if (responseText && responseText.trim().length > 0) {
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseErr) {
+      console.warn("Non-JSON claim API response received:", responseText.slice(0, 200));
+    }
+  }
+
+  if (response.ok && data && data.success) {
+    // Cache successful claim in localStorage for UX convenience
+    try {
+      localStorage.setItem(
+        `zukas_spin_${normalizedMobile}`,
+        JSON.stringify({
+          mobile: normalizedMobile,
+          spinId: data.spinId,
+          prizeName: data.prizeName,
+          couponCode: data.couponCode,
+          createdAt: new Date().toISOString(),
+        })
+      );
+    } catch (e) {
+      // Ignore storage error
+    }
+
+    return data;
+  }
+
+  if (data && (data.error || data.message)) {
+    throw new Error(data.error || data.message);
+  }
+
+  throw new Error(`Server returned HTTP ${response.status} during coupon claim.`);
 };

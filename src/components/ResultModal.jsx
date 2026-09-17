@@ -1,17 +1,26 @@
 import React, { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
-import { Copy, Check, MessageSquare, X, Gift, Frown, Sparkles } from "lucide-react";
+import { Copy, Check, MessageSquare, X, Gift, Frown, Sparkles, ShieldCheck } from "lucide-react";
 import InstagramIcon from "./icons/InstagramIcon";
 import { config } from "../config/config";
 import { trackEvent } from "../utils/analytics";
 import { getWhatsAppOrderLink } from "../utils/whatsapp";
+import { claimCouponService } from "../services/spinService";
 
 export default function ResultModal({
   prize,
   couponCode,
+  userName,
+  spinId,
+  isClaimed = false,
+  claimedMobile = null,
+  onClaimSuccess,
   onClose,
 }) {
   const [copied, setCopied] = useState(false);
+  const [mobileInput, setMobileInput] = useState("");
+  const [claimError, setClaimError] = useState("");
+  const [isClaiming, setIsClaiming] = useState(false);
 
   useEffect(() => {
     // Fire confetti for winning prize only
@@ -32,28 +41,11 @@ export default function ResultModal({
           });
         }
 
-        fire(0.25, {
-          spread: 26,
-          startVelocity: 55,
-        });
-        fire(0.2, {
-          spread: 60,
-        });
-        fire(0.35, {
-          spread: 100,
-          decay: 0.91,
-          scalar: 0.8,
-        });
-        fire(0.1, {
-          spread: 120,
-          startVelocity: 25,
-          decay: 0.92,
-          scalar: 1.2,
-        });
-        fire(0.1, {
-          spread: 120,
-          startVelocity: 45,
-        });
+        fire(0.25, { spread: 26, startVelocity: 55 });
+        fire(0.2, { spread: 60 });
+        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+        fire(0.1, { spread: 120, startVelocity: 45 });
       } catch (e) {
         // Fallback if canvas-confetti fails
       }
@@ -83,9 +75,39 @@ export default function ResultModal({
     }
   };
 
+  const handleClaimSubmit = async (e) => {
+    e.preventDefault();
+    const digits = mobileInput.replace(/\D/g, "");
+    if (digits.length !== 10) {
+      setClaimError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    setClaimError("");
+    setIsClaiming(true);
+
+    try {
+      const res = await claimCouponService(spinId, digits);
+      if (res && res.success) {
+        if (onClaimSuccess) {
+          onClaimSuccess({
+            mobile: res.mobile,
+            couponCode: res.couponCode || couponCode,
+          });
+        }
+      } else {
+        setClaimError(res.error || res.message || "Could not claim coupon.");
+      }
+    } catch (err) {
+      setClaimError(err.message || "Failed to claim coupon. Please try again.");
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
   const handleWhatsAppOrder = () => {
     trackEvent("order_clicked", { source: "result_modal_whatsapp", prize: prize.label, couponCode });
-    const link = getWhatsAppOrderLink(prize, couponCode);
+    const link = getWhatsAppOrderLink(prize, couponCode, userName);
     window.open(link, "_blank");
   };
 
@@ -93,6 +115,8 @@ export default function ResultModal({
     trackEvent("instagram_clicked", { source: "result_modal" });
     window.open(config.instagramUrl, "_blank");
   };
+
+  const displayName = userName ? userName.trim() : "";
 
   return (
     <div className="modal-backdrop-overlay" onClick={onClose}>
@@ -123,9 +147,14 @@ export default function ResultModal({
             </div>
 
             <h2 id="modal-title" className="modal-headline-win">
-              🎉 CONGRATULATIONS! 🎉
+              🎉 YOU WON {(prize.wheelLabel || prize.label).toUpperCase()}! 🎉
             </h2>
-            <p className="modal-subtext">You just won an exclusive Zukas Kitchen reward!</p>
+            
+            {displayName && (
+              <p className="modal-subtext" style={{ fontSize: "16px", fontWeight: "700", color: "#1E293B", marginBottom: "14px" }}>
+                Hi {displayName}! 🎉
+              </p>
+            )}
 
             {/* Prize Highlight Box */}
             <div className="prize-result-box" style={{ borderColor: prize.bgColor }}>
@@ -162,8 +191,65 @@ export default function ResultModal({
                     )}
                   </button>
                 </div>
-                <p className="coupon-disclaimer">
-                  Click below to order directly on WhatsApp with your coupon pre-filled!
+              </div>
+            )}
+
+            {/* STEP 4: Mobile Number Form After Win */}
+            {!isClaimed ? (
+              <form onSubmit={handleClaimSubmit} className="claim-coupon-form">
+                <label htmlFor="claim-mobile-input" className="claim-form-label">
+                  Enter mobile number to receive/use your coupon
+                </label>
+
+                <div className={`mobile-input-wrapper ${claimError ? "input-has-error" : ""}`}>
+                  <div className="country-code-badge">
+                    <span className="flag-icon">🇮🇳</span>
+                    <span className="country-code">+91</span>
+                  </div>
+
+                  <input
+                    id="claim-mobile-input"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={10}
+                    value={mobileInput}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "");
+                      if (digits.length <= 10) {
+                        setMobileInput(digits);
+                        if (claimError) setClaimError("");
+                      }
+                    }}
+                    disabled={isClaiming}
+                    placeholder="Enter 10-digit mobile number"
+                    className="mobile-text-input"
+                    autoComplete="tel-national"
+                  />
+                </div>
+
+                {claimError && (
+                  <div className="form-error-message" role="alert">
+                    <span>⚠️ {claimError}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="modal-claim-coupon-btn"
+                  disabled={isClaiming}
+                >
+                  {isClaiming ? "CLAIMING COUPON..." : "📱 CLAIM COUPON"}
+                </button>
+              </form>
+            ) : (
+              <div className="coupon-claimed-success-box">
+                <div className="claimed-success-badge">
+                  <ShieldCheck size={20} />
+                  <span>COUPON CLAIMED SUCCESSFULLY{claimedMobile ? ` (${claimedMobile})` : ""}!</span>
+                </div>
+                <p className="coupon-disclaimer" style={{ margin: 0, textAlign: "center" }}>
+                  Click below to order directly on WhatsApp with your coupon code pre-filled!
                 </p>
               </div>
             )}
@@ -207,6 +293,11 @@ export default function ResultModal({
             <h2 id="modal-title" className="modal-headline-nowin">
               😔 Better Luck Next Time
             </h2>
+            {displayName && (
+              <p className="modal-subtext" style={{ fontSize: "16px", fontWeight: "700", color: "#1E293B", marginBottom: "8px" }}>
+                Hi {displayName}! 🍕
+              </p>
+            )}
             <p className="modal-subtext">
               Don't worry! You can still check out our delicious pizzas and order directly on WhatsApp.
             </p>
@@ -226,7 +317,7 @@ export default function ResultModal({
                 className="modal-instagram-btn"
                 onClick={handleInstagramClick}
               >
-                <Instagram size={18} />
+                <InstagramIcon size={18} />
                 <span>FOLLOW US ON INSTAGRAM</span>
               </button>
 

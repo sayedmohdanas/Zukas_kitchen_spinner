@@ -1,9 +1,9 @@
 import handler from "../api/spin.js";
 
-function createMockReqRes(mobile, method = "POST") {
+function createMockReqRes(mobile, method = "POST", name = "Test User") {
   const req = {
     method,
-    body: { mobile }
+    body: { name, mobile }
   };
   let statusCode = 200;
   let responseData = null;
@@ -37,8 +37,8 @@ async function runVercelApiTests() {
   console.log(`1. GET /api/spin → Status: ${res1Data.statusCode}, JSON: ${JSON.stringify(res1Data.responseData)}`);
   console.log("   Pass:", res1Data.statusCode === 405 && res1Data.responseData.success === false ? "PASS" : "FAIL");
 
-  // 2. POST with missing mobile -> 400 + valid JSON response
-  const { req: req2, res: res2, getResult: g2 } = createMockReqRes(null, "POST");
+  // 2. POST with missing required name -> 400 + valid JSON response
+  const { req: req2, res: res2, getResult: g2 } = createMockReqRes(null, "POST", "");
   await handler(req2, res2);
   const res2Data = g2();
   console.log(`2. POST with missing mobile → Status: ${res2Data.statusCode}, JSON: ${JSON.stringify(res2Data.responseData)}`);

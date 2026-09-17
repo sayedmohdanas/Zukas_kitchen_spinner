@@ -325,6 +325,24 @@ export default async function handler(req, res) {
         createdAt: FieldValue.serverTimestamp(),
       });
 
+      // 7. Increment backend analytics counter (nameEntryCount) on campaigns/spin_and_win
+      if (campaignSnap.exists) {
+        transaction.update(campaignRef, {
+          nameEntryCount: FieldValue.increment(1),
+        });
+      } else {
+        transaction.set(
+          campaignRef,
+          {
+            nameEntryCount: FieldValue.increment(1),
+            enabled: true,
+            repeatEnabled: false,
+            repeatAfterDays: 2,
+          },
+          { merge: true }
+        );
+      }
+
       return {
         success: true,
         spinId: newSpinRef.id,

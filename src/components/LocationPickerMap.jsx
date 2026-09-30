@@ -1,104 +1,158 @@
 import React, { useEffect, useRef, useState } from "react";
-import { MapPin, Navigation, Move } from "lucide-react";
+import { MapPin, Move } from "lucide-react";
 
 export default function LocationPickerMap({ coords, onLocationChange }) {
   const mapRef = useRef(null);
+  const leafletMapRef = useRef(null);
+  const leafletMarkerRef = useRef(null);
   const googleMapRef = useRef(null);
-  const markerRef = useRef(null);
+  const googleMarkerRef = useRef(null);
   const [loadError, setLoadError] = useState(false);
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+  const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY;
 
   useEffect(() => {
-    if (!apiKey) {
-      setLoadError(true);
-      return;
+    // If Google API key exists, try loading Google Maps JS SDK
+    if (googleApiKey) {
+      loadGoogleMaps();
+    } else {
+      // Fall back to Leaflet (OpenStreetMap) - 100% reliable on all production mobile phones without API key!
+      loadLeafletMaps();
     }
 
-    // Load Google Maps Script dynamically if not already loaded
-    const loadGoogleMapsScript = () => {
+    function loadGoogleMaps() {
       if (window.google && window.google.maps) {
-        initMap();
+        initGoogleMap();
         return;
       }
-
-      const existingScript = document.getElementById("google-maps-js-sdk");
-      if (existingScript) {
-        existingScript.addEventListener("load", initMap);
-        return;
-      }
-
       const script = document.createElement("script");
-      script.id = "google-maps-js-sdk";
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&libraries=places`;
       script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        initMap();
-      };
-      script.onerror = () => {
-        setLoadError(true);
-      };
+      script.onload = () => initGoogleMap();
+      script.onerror = () => loadLeafletMaps();
       document.head.appendChild(script);
-    };
+    }
 
-    const initMap = () => {
+    function initGoogleMap() {
       if (!mapRef.current || !window.google || !window.google.maps) return;
+      const initialCenter = coords || { lat: 26.2183, lng: 82.9739 };
 
-      const initialCenter = coords || { lat: 26.2183, lng: 82.9739 }; // Default Zukas region
-
-      // Create Map
       const map = new window.google.maps.Map(mapRef.current, {
         center: initialCenter,
         zoom: 17,
-        mapTypeId: "roadmap",
+        gestureHandling: "greedy",
         zoomControl: true,
         streetViewControl: false,
         mapTypeControl: false,
-        fullscreenControl: false,
-        gestureHandling: "greedy", // Allow touch dragging easily on mobile
       });
       googleMapRef.current = map;
 
-      // Create Draggable Marker
       const marker = new window.google.maps.Marker({
         position: initialCenter,
         map: map,
         draggable: true,
-        animation: window.google.maps.Animation.DROP,
         title: "Drag to set exact delivery spot",
       });
-      markerRef.current = marker;
+      googleMarkerRef.current = marker;
 
-      setIsMapLoaded(true);
-
-      // Event Listener: Marker Dragged
       marker.addListener("dragend", (e) => {
-        const newLat = e.latLng.lat();
-        const newLng = e.latLng.lng();
-        onLocationChange({ lat: newLat, lng: newLng });
+        onLocationChange({ lat: e.latLng.lat(), lng: e.latLng.lng() });
       });
 
-      // Event Listener: Map Clicked (move marker to click position)
       map.addListener("click", (e) => {
-        const newLat = e.latLng.lat();
-        const newLng = e.latLng.lng();
         marker.setPosition(e.latLng);
         map.panTo(e.latLng);
-        onLocationChange({ lat: newLat, lng: newLng });
+        onLocationChange({ lat: e.latLng.lat(), lng: e.latLng.lng() });
       });
-    };
+    }
 
-    loadGoogleMapsScript();
-  }, [apiKey]);
+    function loadLeafletMaps() {
+      // Load Leaflet CSS
+      if (!document.getElementById("leaflet-css")) {
+        const link = document.createElement("link");
+        link.id = "leaflet-css";
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
+      }
 
-  // Update map center & marker position if coords prop updates externally
+      // Load Leaflet JS
+      if (window.L) {
+        initLeafletMap();
+        return;
+      }
+
+      const existingScript = document.getElementById("leaflet-js");
+      if (existingScript) {
+        existingScript.addEventListener("load", initLeafletMap);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.id = "leaflet-js";
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.onload = () => initLeafletMap();
+      script.onerror = () => setLoadError(true);
+      document.head.appendChild(script);
+    }
+
+    function initLeafletMap() {
+      if (!mapRef.current || !window.L || leafletMapRef.current) return;
+      const initialCenter = coords ? [coords.lat, coords.lng] : [26.2183, 82.9739];
+
+      const map = window.L.map(mapRef.current, {
+        center: initialCenter,
+        zoom: 16,
+        zoomControl: true,
+      });
+      leafletMapRef.current = map;
+
+      window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap",
+      }).addTo(map);
+
+      // Custom red pin icon
+      const customIcon = window.L.divIcon({
+        className: "custom-leaflet-marker",
+        html: `<div style="background:#E53E3E;width:28px;height:28px;border-radius:50%;border:3px solid #FFF;box-shadow:0 3px 10px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:#FFF;font-size:14px;cursor:grab;">📍</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      });
+
+      const marker = window.L.marker(initialCenter, {
+        draggable: true,
+        icon: customIcon,
+      }).addTo(map);
+      leafletMarkerRef.current = marker;
+
+      // Marker Drag End
+      marker.on("dragend", () => {
+        const position = marker.getLatLng();
+        onLocationChange({ lat: position.lat, lng: position.lng });
+      });
+
+      // Map Click
+      map.on("click", (e) => {
+        marker.setLatLng(e.latlng);
+        map.panTo(e.latlng);
+        onLocationChange({ lat: e.latlng.lat, lng: e.latlng.lng });
+      });
+    }
+  }, [googleApiKey]);
+
+  // Sync prop changes
   useEffect(() => {
-    if (coords && googleMapRef.current && markerRef.current) {
-      const position = new window.google.maps.LatLng(coords.lat, coords.lng);
-      markerRef.current.setPosition(position);
-      googleMapRef.current.panTo(position);
+    if (coords) {
+      if (googleMarkerRef.current && googleMapRef.current) {
+        const pos = new window.google.maps.LatLng(coords.lat, coords.lng);
+        googleMarkerRef.current.setPosition(pos);
+        googleMapRef.current.panTo(pos);
+      } else if (leafletMarkerRef.current && leafletMapRef.current) {
+        const pos = [coords.lat, coords.lng];
+        leafletMarkerRef.current.setLatLng(pos);
+        leafletMapRef.current.panTo(pos);
+      }
     }
   }, [coords]);
 
@@ -109,7 +163,6 @@ export default function LocationPickerMap({ coords, onLocationChange }) {
           <MapPin size={16} className="pin-red" />
           <span>Coordinates: {coords ? `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : "Not set"}</span>
         </div>
-        <p className="fallback-help-text">Drag location unavailable. Tap Share My Current Location to update.</p>
       </div>
     );
   }

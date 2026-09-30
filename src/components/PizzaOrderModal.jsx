@@ -311,17 +311,6 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
                     coords={locationCoords}
                     onLocationChange={handleLocationChange}
                   />
-
-                  <a
-                    href={locationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="location-preview-link"
-                  >
-                    <MapPin size={14} />
-                    <span>Open in Google Maps ({locationCoords.lat.toFixed(4)}, {locationCoords.lng.toFixed(4)})</span>
-                    <ExternalLink size={13} />
-                  </a>
                 </div>
               )}
 

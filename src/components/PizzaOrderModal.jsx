@@ -8,6 +8,7 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
   const [hasExtraCheese, setHasExtraCheese] = useState(false);
 
   // Delivery details state (optional)
+  const [customerName, setCustomerName] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [landmark, setLandmark] = useState("");
   const [isLocating, setIsLocating] = useState(false);
@@ -101,6 +102,7 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
       size: sizeLabel,
       extraCheese: hasExtraCheese,
       totalPrice,
+      hasName: Boolean(customerName.trim()),
       hasAddress: Boolean(deliveryAddress.trim()),
       hasLocation: Boolean(locationUrl.trim()),
     });
@@ -112,6 +114,7 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
       hasExtraCheese,
       extraCheesePrice,
       totalPrice,
+      customerName,
       deliveryAddress,
       landmark,
       locationUrl,
@@ -213,6 +216,21 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
             <label className="order-group-label">📍 Delivery Details (Optional)</label>
 
             <div className="delivery-inputs-container">
+              {/* Customer Name Input (Optional) */}
+              <div className="input-field-group">
+                <label htmlFor="customer-name-input" className="input-sublabel">
+                  Your Name (optional):
+                </label>
+                <input
+                  type="text"
+                  id="customer-name-input"
+                  className="modal-text-input"
+                  placeholder="Enter your name..."
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                />
+              </div>
+
               {/* Manual Address Input */}
               <div className="input-field-group">
                 <label htmlFor="delivery-address-input" className="input-sublabel">
@@ -323,6 +341,13 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
             )}
 
             {/* Delivery Details Summary Rows */}
+            {customerName.trim() && (
+              <div className="summary-row">
+                <span>Name:</span>
+                <span>{customerName.trim()}</span>
+              </div>
+            )}
+
             {deliveryAddress.trim() && (
               <div className="summary-row">
                 <span>Address:</span>

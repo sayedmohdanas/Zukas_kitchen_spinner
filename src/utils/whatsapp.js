@@ -40,6 +40,7 @@ export const getWhatsAppPizzaOrderLink = ({
   hasExtraCheese,
   extraCheesePrice = 25,
   totalPrice,
+  customerName = "",
   deliveryAddress = "",
   landmark = "",
   locationUrl = "",
@@ -48,13 +49,22 @@ export const getWhatsAppPizzaOrderLink = ({
   const sizeLabel = size === "small" ? "Small" : "Medium";
   const extraCheeseText = hasExtraCheese ? `Yes (+₹${extraCheesePrice})` : "No";
 
+  let greeting = "Hi Zukas Kitchen! 🍕";
+  const nameTrimmed = String(customerName || "").trim();
+  if (nameTrimmed) {
+    greeting = `Hi Zukas Kitchen! I'm ${nameTrimmed} 🍕`;
+  }
+
   let deliverySection = "";
   const addressTrimmed = String(deliveryAddress || "").trim();
   const landmarkTrimmed = String(landmark || "").trim();
   const urlTrimmed = String(locationUrl || "").trim();
 
-  if (addressTrimmed || landmarkTrimmed || urlTrimmed) {
+  if (nameTrimmed || addressTrimmed || landmarkTrimmed || urlTrimmed) {
     deliverySection = "\n\n📍 Delivery Details:";
+    if (nameTrimmed) {
+      deliverySection += `\nName: ${nameTrimmed}`;
+    }
     if (addressTrimmed) {
       deliverySection += `\nAddress: ${addressTrimmed}`;
     }
@@ -66,7 +76,7 @@ export const getWhatsAppPizzaOrderLink = ({
     }
   }
 
-  const messageText = `Hi Zukas Kitchen! 🍕\n\nI'd like to order:\n\nPizza: ${pizzaName}\nSize: ${sizeLabel}\nPizza Price: ₹${basePrice}\nExtra Cheese: ${extraCheeseText}\n\nTotal: ₹${totalPrice}${deliverySection}\n\nPlease confirm my order. Thank you!`;
+  const messageText = `${greeting}\n\nI'd like to order:\n\nPizza: ${pizzaName}\nSize: ${sizeLabel}\nPizza Price: ₹${basePrice}\nExtra Cheese: ${extraCheeseText}\n\nTotal: ₹${totalPrice}${deliverySection}\n\nPlease confirm my order. Thank you!`;
 
   return `https://wa.me/${number}?text=${encodeURIComponent(messageText)}`;
 };

@@ -29,3 +29,47 @@ export const getWhatsAppOrderLink = (prize = null, couponCode = null, userName =
   const encodedMessage = encodeURIComponent(messageText);
   return `https://wa.me/${number}?text=${encodedMessage}`;
 };
+
+/**
+ * Generates a WhatsApp order link for a detailed pizza order with size, price, extra cheese, delivery details, and total.
+ */
+export const getWhatsAppPizzaOrderLink = ({
+  pizzaName,
+  size,
+  basePrice,
+  hasExtraCheese,
+  extraCheesePrice = 25,
+  totalPrice,
+  deliveryAddress = "",
+  landmark = "",
+  locationUrl = "",
+}) => {
+  const number = config.whatsappNumber;
+  const sizeLabel = size === "small" ? "Small" : "Medium";
+  const extraCheeseText = hasExtraCheese ? `Yes (+₹${extraCheesePrice})` : "No";
+
+  let deliverySection = "";
+  const addressTrimmed = String(deliveryAddress || "").trim();
+  const landmarkTrimmed = String(landmark || "").trim();
+  const urlTrimmed = String(locationUrl || "").trim();
+
+  if (addressTrimmed || landmarkTrimmed || urlTrimmed) {
+    deliverySection = "\n\n📍 Delivery Details:";
+    if (addressTrimmed) {
+      deliverySection += `\nAddress: ${addressTrimmed}`;
+    }
+    if (landmarkTrimmed) {
+      deliverySection += `\nLandmark: ${landmarkTrimmed}`;
+    }
+    if (urlTrimmed) {
+      deliverySection += `\nCurrent Location:\n${urlTrimmed}`;
+    }
+  }
+
+  const messageText = `Hi Zukas Kitchen! 🍕\n\nI'd like to order:\n\nPizza: ${pizzaName}\nSize: ${sizeLabel}\nPizza Price: ₹${basePrice}\nExtra Cheese: ${extraCheeseText}\n\nTotal: ₹${totalPrice}${deliverySection}\n\nPlease confirm my order. Thank you!`;
+
+  return `https://wa.me/${number}?text=${encodeURIComponent(messageText)}`;
+};
+
+
+

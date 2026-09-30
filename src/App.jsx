@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
+import MenuSection from "./components/MenuSection";
 import HowItWorks from "./components/HowItWorks";
 import PromoBanner from "./components/PromoBanner";
 import WhyZukas from "./components/WhyZukas";
@@ -142,6 +143,9 @@ export default function App() {
           isLoadingCampaign={isLoadingCampaign}
           prizesList={prizesList}
         />
+
+        {/* Zukas Kitchen Pizza Menu Section */}
+        <MenuSection />
 
         {/* How It Works Section */}
         <HowItWorks />

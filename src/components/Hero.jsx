@@ -2,8 +2,9 @@ import React from "react";
 import Spinner from "./Spinner";
 import NameInputForm from "./NameInputForm";
 import SpinButton from "./SpinButton";
-import { Sparkles, Pizza, ShieldCheck, Heart, Clock, Award } from "lucide-react";
+import { Sparkles, Pizza, ShieldCheck, Heart, Clock, Award, ArrowDown, MapPin } from "lucide-react";
 import { config } from "../config/config";
+import { trackEvent } from "../utils/analytics";
 
 export default function Hero({
   userName,
@@ -22,6 +23,18 @@ export default function Hero({
   isLoadingCampaign = false,
   prizesList = [],
 }) {
+  const handleScrollToMenu = () => {
+    trackEvent("nav_click", { source: "hero_highlighted_menu_btn" });
+    const menuEl = document.getElementById("menu");
+    if (menuEl) {
+      menuEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      menuEl.classList.add("menu-section-flash-highlight");
+      setTimeout(() => {
+        menuEl.classList.remove("menu-section-flash-highlight");
+      }, 1800);
+    }
+  };
+
   return (
     <section id="hero" className="hero-section">
       <div className="hero-bg-shapes">
@@ -64,6 +77,43 @@ export default function Hero({
               <Heart size={16} className="benefit-icon" />
               <span>Made with Love</span>
             </div>
+          </div>
+
+          {/* Location Markers */}
+          <div className="hero-locations-wrapper">
+            <div className="hero-locations-label">
+              <MapPin size={16} className="hero-location-pin-icon" />
+              <span>Delivery Available In:</span>
+            </div>
+            <div className="hero-location-chips">
+              <span className="hero-location-chip">
+                <MapPin size={12} className="chip-pin" /> Khankah
+              </span>
+              <span className="hero-location-chip">
+                <MapPin size={12} className="chip-pin" /> Bindwal
+              </span>
+              <span className="hero-location-chip">
+                <MapPin size={12} className="chip-pin" /> Jairajpur
+              </span>
+              <span className="hero-location-chip">
+                <MapPin size={12} className="chip-pin" /> Jagmalpur
+              </span>
+              <span className="hero-location-chip">
+                <MapPin size={12} className="chip-pin" /> Hari Pur
+              </span>
+            </div>
+          </div>
+
+          {/* Highlighted Menu Button directly below feature cards */}
+          <div className="hero-feature-menu-btn-wrapper">
+            <button
+              type="button"
+              className="hero-highlighted-menu-btn"
+              onClick={handleScrollToMenu}
+            >
+              <span>🍕 VIEW OUR MENU</span>
+              <ArrowDown size={18} className="arrow-bounce-icon" />
+            </button>
           </div>
 
           {/* Form and Spin CTA Box */}

@@ -70,6 +70,9 @@ export default function Navbar() {
           <button onClick={() => handleNavClick("hero", "Home")} className="nav-link">
             Home
           </button>
+          <button onClick={() => handleNavClick("menu", "Menu")} className="nav-link nav-link-highlight">
+            🍕 Our Menu
+          </button>
           <button onClick={() => handleNavClick("how-it-works", "How It Works")} className="nav-link">
             How It Works
           </button>
@@ -148,11 +151,14 @@ export default function Navbar() {
               <button onClick={() => handleNavClick("hero", "Home")} className="mobile-nav-link">
                 Home & Spin
               </button>
+              <button onClick={() => handleNavClick("menu", "Our Menu")} className="mobile-nav-link mobile-nav-menu-highlight">
+                🍕 Our Pizza Menu
+              </button>
               <button onClick={() => handleNavClick("how-it-works", "How It Works")} className="mobile-nav-link">
                 How It Works
               </button>
               <button onClick={() => handleNavClick("promo", "Offers")} className="mobile-nav-link">
-                Offers & Menu
+                Offers
               </button>
               <button onClick={() => handleNavClick("why-zukas", "Why Us")} className="mobile-nav-link">
                 Why Zukas Kitchen

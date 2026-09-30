@@ -243,34 +243,26 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
                 />
               </div>
 
-              {/* Use My Current Location Button Row */}
+              {/* Single Location Toggle Button */}
               <div className="location-btn-row">
-                <button
-                  type="button"
-                  className={`use-location-btn ${locationSuccess ? "success" : ""}`}
-                  onClick={handleGetLocation}
-                  disabled={isLocating}
-                >
-                  <Navigation size={16} className={isLocating ? "animate-spin" : ""} />
-                  <span>
-                    {isLocating
-                      ? "Fetching location..."
-                      : locationSuccess
-                      ? "📍 Location Captured (Update)"
-                      : "📍 SHARE MY CURRENT LOCATION"}
-                  </span>
-                </button>
-
-                {locationSuccess && (
+                {!locationSuccess ? (
                   <button
                     type="button"
-                    className="remove-location-btn"
-                    onClick={handleRemoveLocation}
-                    title="Remove captured location"
-                    aria-label="Remove captured location"
+                    className="use-location-btn"
+                    onClick={handleGetLocation}
+                    disabled={isLocating}
                   >
-                    <Trash2 size={15} />
-                    <span>Unselect</span>
+                    <Navigation size={16} className={isLocating ? "animate-spin" : ""} />
+                    <span>{isLocating ? "Fetching location..." : "📍 SHARE MY CURRENT LOCATION"}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="use-location-btn remove-state"
+                    onClick={handleRemoveLocation}
+                  >
+                    <X size={16} />
+                    <span>REMOVE / UNSELECT LOCATION</span>
                   </button>
                 )}
               </div>
@@ -278,18 +270,9 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
               {/* Location Feedback State Messages */}
               {locationSuccess && locationCoords && (
                 <div className="location-success-box">
-                  <div className="success-header-row">
-                    <div className="success-header">
-                      <Check size={16} />
-                      <span>Location captured successfully!</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="unselect-link-btn"
-                      onClick={handleRemoveLocation}
-                    >
-                      Remove
-                    </button>
+                  <div className="success-header">
+                    <Check size={16} />
+                    <span>Location captured successfully!</span>
                   </div>
                   <a
                     href={locationUrl}

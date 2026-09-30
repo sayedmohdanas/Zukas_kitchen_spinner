@@ -3016,6 +3016,17 @@ a {
   background: var(--zukas-green-light);
 }
 
+.use-location-btn.remove-state {
+  background: rgba(229, 62, 62, 0.08);
+  color: #E53E3E;
+  border: 1.5px solid rgba(229, 62, 62, 0.4);
+}
+
+.use-location-btn.remove-state:hover {
+  background: rgba(229, 62, 62, 0.16);
+  border-color: #E53E3E;
+}
+
 .remove-location-btn {
   display: inline-flex;
   align-items: center;

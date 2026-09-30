@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, MessageSquare, Check, MapPin, Navigation, ExternalLink, AlertCircle, Trash2 } from "lucide-react";
 import { getWhatsAppPizzaOrderLink } from "../utils/whatsapp";
 import { trackEvent } from "../utils/analytics";
+import LocationPickerMap from "./LocationPickerMap";
 
 export default function PizzaOrderModal({ pizza, initialSize = "small", onClose }) {
   const [selectedSize, setSelectedSize] = useState(initialSize);
@@ -41,6 +42,18 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
   const extraCheesePrice = 25;
   const totalPrice = basePrice + (hasExtraCheese ? extraCheesePrice : 0);
   const sizeLabel = selectedSize === "small" ? "Small" : "Medium";
+
+  // Handle Dragging Marker on Interactive Map
+  const handleLocationChange = (newCoords) => {
+    const lat = newCoords.lat;
+    const lng = newCoords.lng;
+    const url = `https://www.google.com/maps?q=${lat},${lng}`;
+
+    setLocationCoords({ lat, lng });
+    setLocationUrl(url);
+    setLocationSuccess(true);
+    trackEvent("location_marker_dragged", { lat, lng });
+  };
 
   // Remove / Unselect Location
   const handleRemoveLocation = () => {
@@ -285,20 +298,28 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
                 )}
               </div>
 
-              {/* Location Feedback State Messages */}
+              {/* Location Feedback State Messages & Interactive Draggable Map */}
               {locationSuccess && locationCoords && (
                 <div className="location-success-box">
                   <div className="success-header">
                     <Check size={16} />
-                    <span>Location captured successfully!</span>
+                    <span>Location Captured! Drag pin to refine spot:</span>
                   </div>
+
+                  {/* Interactive Draggable Google Map */}
+                  <LocationPickerMap
+                    coords={locationCoords}
+                    onLocationChange={handleLocationChange}
+                  />
+
                   <a
                     href={locationUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="location-preview-link"
                   >
-                    <span>Google Maps Link ({locationCoords.lat.toFixed(4)}, {locationCoords.lng.toFixed(4)})</span>
+                    <MapPin size={14} />
+                    <span>Open in Google Maps ({locationCoords.lat.toFixed(4)}, {locationCoords.lng.toFixed(4)})</span>
                     <ExternalLink size={13} />
                   </a>
                 </div>

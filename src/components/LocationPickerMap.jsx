@@ -9,16 +9,11 @@ export default function LocationPickerMap({ coords, onLocationChange }) {
   const googleMarkerRef = useRef(null);
   const [loadError, setLoadError] = useState(false);
 
-  const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+  const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY || "AIzaSyAbwv5P-iff_vVB7TpstiQ1RI1kvktza47";
 
   useEffect(() => {
-    // If Google API key exists, try loading Google Maps JS SDK
-    if (googleApiKey) {
-      loadGoogleMaps();
-    } else {
-      // Fall back to Leaflet (OpenStreetMap) - 100% reliable on all production mobile phones without API key!
-      loadLeafletMaps();
-    }
+    // Load Google Maps JS SDK
+    loadGoogleMaps();
 
     function loadGoogleMaps() {
       if (window.google && window.google.maps) {

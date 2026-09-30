@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, MessageSquare, Check, MapPin, Navigation, ExternalLink, AlertCircle } from "lucide-react";
+import { X, MessageSquare, Check, MapPin, Navigation, ExternalLink, AlertCircle, Trash2 } from "lucide-react";
 import { getWhatsAppPizzaOrderLink } from "../utils/whatsapp";
 import { trackEvent } from "../utils/analytics";
 
@@ -40,6 +40,15 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
   const extraCheesePrice = 25;
   const totalPrice = basePrice + (hasExtraCheese ? extraCheesePrice : 0);
   const sizeLabel = selectedSize === "small" ? "Small" : "Medium";
+
+  // Remove / Unselect Location
+  const handleRemoveLocation = () => {
+    setLocationSuccess(false);
+    setLocationCoords(null);
+    setLocationUrl("");
+    setLocationError("");
+    trackEvent("location_removed", {});
+  };
 
   // Request Browser Geolocation (Optional)
   const handleGetLocation = () => {
@@ -234,7 +243,7 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
                 />
               </div>
 
-              {/* Use My Current Location Button */}
+              {/* Use My Current Location Button Row */}
               <div className="location-btn-row">
                 <button
                   type="button"
@@ -251,14 +260,36 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
                       : "📍 SHARE MY CURRENT LOCATION"}
                   </span>
                 </button>
+
+                {locationSuccess && (
+                  <button
+                    type="button"
+                    className="remove-location-btn"
+                    onClick={handleRemoveLocation}
+                    title="Remove captured location"
+                    aria-label="Remove captured location"
+                  >
+                    <Trash2 size={15} />
+                    <span>Unselect</span>
+                  </button>
+                )}
               </div>
 
               {/* Location Feedback State Messages */}
               {locationSuccess && locationCoords && (
                 <div className="location-success-box">
-                  <div className="success-header">
-                    <Check size={16} />
-                    <span>Location captured successfully!</span>
+                  <div className="success-header-row">
+                    <div className="success-header">
+                      <Check size={16} />
+                      <span>Location captured successfully!</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="unselect-link-btn"
+                      onClick={handleRemoveLocation}
+                    >
+                      Remove
+                    </button>
                   </div>
                   <a
                     href={locationUrl}

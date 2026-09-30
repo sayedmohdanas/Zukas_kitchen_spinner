@@ -2983,15 +2983,18 @@ a {
 }
 
 .location-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 4px;
 }
 
 .use-location-btn {
+  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
   background: var(--zukas-surface);
   color: var(--zukas-green);
   border: 1.5px dashed var(--zukas-green);
@@ -3013,6 +3016,27 @@ a {
   background: var(--zukas-green-light);
 }
 
+.remove-location-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(229, 62, 62, 0.08);
+  border: 1px solid rgba(229, 62, 62, 0.3);
+  color: #E53E3E;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.remove-location-btn:hover {
+  background: rgba(229, 62, 62, 0.16);
+  border-color: #E53E3E;
+}
+
 .animate-spin {
   animation: spin 1s linear infinite;
 }
@@ -3029,7 +3053,14 @@ a {
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+}
+
+.success-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .success-header {
@@ -3039,6 +3070,22 @@ a {
   color: var(--zukas-green);
   font-size: 12.5px;
   font-weight: 800;
+}
+
+.unselect-link-btn {
+  background: none;
+  border: none;
+  color: #E53E3E;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.unselect-link-btn:hover {
+  color: #C53030;
 }
 
 .location-preview-link {

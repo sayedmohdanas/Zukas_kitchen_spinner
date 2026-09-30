@@ -132,7 +132,7 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
           {pizza.image && (
             <div className="order-modal-img-container">
               <div className="order-modal-img-box">
-                <img src={pizza.image} alt={pizza.name} className="order-modal-img" />
+                <img src={pizza.image} alt={pizza.name} className="order-modal-img" loading="lazy" decoding="async" />
               </div>
               <div className="order-modal-info-bar">
                 <span className={`veg-tag ${pizza.isVeg ? "veg" : "non-veg"}`}>

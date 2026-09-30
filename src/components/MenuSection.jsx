@@ -102,7 +102,7 @@ export default function MenuSection() {
                 <div key={item.id} className="pizza-card">
                   {item.image && (
                     <div className="pizza-card-img-wrapper" onClick={() => handleOpenOrderModal(item, currentSize)}>
-                      <img src={item.image} alt={item.name} className="pizza-card-img" loading="lazy" />
+                      <img src={item.image} alt={item.name} className="pizza-card-img" loading="lazy" decoding="async" />
                     </div>
                   )}
 

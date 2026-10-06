@@ -19,9 +19,17 @@ export const getWhatsAppOrderLink = (prize = null, couponCode = null, userName =
   let messageText = "";
   const isWinning = prize ? (typeof prize === "string" ? true : prize.isWinningPrize !== false) : false;
   const prizeLabel = typeof prize === "string" ? prize : (prize ? prize.label || prize.name : null);
+  
+  let finalOfferText = prizeLabel;
+  if (prize && typeof prize !== "string" && prize.subLabel) {
+    // Only append subLabel if it's not already part of the main label to avoid duplication
+    if (prizeLabel && !prizeLabel.toLowerCase().includes(prize.subLabel.toLowerCase())) {
+      finalOfferText = `${prizeLabel} (${prize.subLabel})`;
+    }
+  }
 
-  if (isWinning && prizeLabel && couponCode) {
-    messageText = `${greeting}\n\nI have an active Spin & Win offer 🎉\n\nOffer: ${prizeLabel}\nCoupon Code: ${couponCode}\n\nI'd like to place an order.`;
+  if (isWinning && finalOfferText && couponCode) {
+    messageText = `${greeting}\n\nI have an active Spin & Win offer 🎉\n\nOffer: ${finalOfferText}\nCoupon Code: ${couponCode}\n\nI'd like to place an order.`;
   } else {
     messageText = `${greeting}\n\nI'd like to place an order.`;
   }

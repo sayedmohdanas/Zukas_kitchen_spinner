@@ -1,10 +1,10 @@
 // Zukas Kitchen Spin & Win Central Prize Configuration
 const prizes = [
   {
-    id: "25-off-combo",
-    label: "₹25 OFF ON ORDER COMBO",
+    id: "25-off-2-medium-pizza",
+    label: "₹25 OFF IN ORDER 2 MEDIUM PIZZA",
     wheelLabel: "₹25 OFF",
-    subLabel: "ON ORDER COMBO",
+    subLabel: "IN ORDER 2 MEDIUM PIZZA",
     type: "discount",
     value: 25,
     weight: 10, // 10% probability
@@ -12,15 +12,15 @@ const prizes = [
     isWinningPrize: true,
     bgColor: "#198C09", // Zukas Green
     textColor: "#FFFFFF",
-    badge: "COMBO DEAL",
+    badge: "2 PIZZA DEAL",
     accentColor: "#FFD700"
   },
   {
-    id: "10-percent",
-    label: "10% OFF",
-    wheelLabel: "10% OFF",
-    subLabel: "On Any Pizza",
-    type: "discount_percentage",
+    id: "10-off",
+    label: "₹10 OFF",
+    wheelLabel: "₹10 OFF",
+    subLabel: "On Any Order",
+    type: "discount",
     value: 10,
     weight: 55, // 55% probability (most frequent)
     enabled: true,
@@ -61,11 +61,11 @@ const prizes = [
     accentColor: "#94A3B8"
   },
   {
-    id: "15-percent",
-    label: "15% OFF",
-    wheelLabel: "15% OFF",
+    id: "15-off",
+    label: "₹15 OFF",
+    wheelLabel: "₹15 OFF",
     subLabel: "Super Saver",
-    type: "discount_percentage",
+    type: "discount",
     value: 15,
     weight: 8, // 8% probability
     enabled: true,
@@ -77,9 +77,9 @@ const prizes = [
   },
   {
     id: "30-off",
-    label: "₹30 OFF",
+    label: "₹30 OFF ON ORDER 3 ANY MEDIUM PIZZA",
     wheelLabel: "₹30 OFF",
-    subLabel: "On 3rd order",
+    subLabel: "ON ORDER 3 ANY MEDIUM PIZZA",
     type: "discount",
     value: 30,
     weight: 5, // 5% probability
@@ -89,6 +89,21 @@ const prizes = [
     textColor: "#1E293B",
     badge: "YUMMY",
     accentColor: "#198C09"
+  },
+  {
+    id: "free-campa-10",
+    label: "FREE CAMPA WORTH ₹10",
+    wheelLabel: "FREE CAMPA",
+    subLabel: "Worth ₹10",
+    type: "freebie",
+    value: 10,
+    weight: 60,
+    enabled: true,
+    isWinningPrize: true,
+    bgColor: "#E63946", // Red for Campa
+    textColor: "#FFFFFF",
+    badge: "FREE DRINK",
+    accentColor: "#F1FAEE"
   }
 ];
 

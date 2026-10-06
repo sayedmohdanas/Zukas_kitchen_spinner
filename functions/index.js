@@ -6,12 +6,13 @@ const db = admin.firestore();
 
 // Server-side approved prize definitions and probability weights
 const SERVER_PRIZES = [
-  { id: "25-off-combo", label: "₹25 OFF ON ORDER COMBO", wheelLabel: "₹25 OFF", subLabel: "ON ORDER COMBO", type: "discount", value: 25, weight: 10, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS25", bgColor: "#198C09", textColor: "#FFFFFF", badge: "COMBO DEAL", accentColor: "#FFD700" },
-  { id: "10-percent", label: "10% OFF", wheelLabel: "10% OFF", subLabel: "On Any Pizza", type: "discount_percentage", value: 10, weight: 55, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS10", bgColor: "#FF9F1C", textColor: "#1E293B", badge: "SAVINGS", accentColor: "#FFFFFF" },
+  { id: "25-off-2-medium-pizza", label: "₹25 OFF IN ORDER 2 MEDIUM PIZZA", wheelLabel: "₹25 OFF", subLabel: "IN ORDER 2 MEDIUM PIZZA", type: "discount", value: 25, weight: 10, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS25", bgColor: "#198C09", textColor: "#FFFFFF", badge: "2 PIZZA DEAL", accentColor: "#FFD700" },
+  { id: "10-off", label: "₹10 OFF", wheelLabel: "₹10 OFF", subLabel: "On Any Order", type: "discount", value: 10, weight: 55, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS10", bgColor: "#FF9F1C", textColor: "#1E293B", badge: "SAVINGS", accentColor: "#FFFFFF" },
   { id: "20-off", label: "₹20 OFF", wheelLabel: "₹20 OFF", subLabel: "Instant Savings", type: "discount", value: 20, weight: 12, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS20", bgColor: "#FFB703", textColor: "#1E293B", badge: "BONUS", accentColor: "#198C09" },
   { id: "better-luck", label: "BETTER LUCK NEXT TIME", wheelLabel: "BETTER LUCK", subLabel: "NEXT TIME", type: "no_win", value: null, weight: 10, enabled: true, isWinningPrize: false, couponPrefix: null, bgColor: "#334155", textColor: "#F8FAFC", badge: "TRY AGAIN", accentColor: "#94A3B8" },
-  { id: "15-percent", label: "15% OFF", wheelLabel: "15% OFF", subLabel: "Super Saver", type: "discount_percentage", value: 15, weight: 8, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS15", bgColor: "#2A9D8F", textColor: "#FFFFFF", badge: "BIG DEAL", accentColor: "#FFD700" },
-  { id: "30-off", label: "₹30 OFF", wheelLabel: "₹30 OFF", subLabel: "On 3rd order", type: "discount", value: 30, weight: 5, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS30", bgColor: "#F4A261", textColor: "#1E293B", badge: "YUMMY", accentColor: "#198C09" }
+  { id: "15-off", label: "₹15 OFF", wheelLabel: "₹15 OFF", subLabel: "Super Saver", type: "discount", value: 15, weight: 8, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS15", bgColor: "#2A9D8F", textColor: "#FFFFFF", badge: "BIG DEAL", accentColor: "#FFD700" },
+  { id: "30-off", label: "₹30 OFF ON ORDER 3 ANY MEDIUM PIZZA", wheelLabel: "₹30 OFF", subLabel: "ON ORDER 3 ANY MEDIUM PIZZA", type: "discount", value: 30, weight: 5, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS30", bgColor: "#F4A261", textColor: "#1E293B", badge: "YUMMY", accentColor: "#198C09" },
+  { id: "free-campa-10", label: "FREE CAMPA WORTH ₹10", wheelLabel: "FREE CAMPA", subLabel: "Worth ₹10", type: "freebie", value: 10, weight: 60, enabled: true, isWinningPrize: true, couponPrefix: "ZUKASCAMPA", bgColor: "#E63946", textColor: "#FFFFFF", badge: "FREE DRINK", accentColor: "#F1FAEE" }
 ];
 
 /**
@@ -123,26 +124,39 @@ exports.spinWheel = onCall({ cors: true }, async (request) => {
       prizesSnap.forEach((docSnap) => {
         const pData = docSnap.data();
         if (pData.enabled !== false) {
-          const matchedServer = SERVER_PRIZES.find((p) => p.id === docSnap.id) || {};
+          const oldToNewIds = {
+            "10-percent": "10-off",
+            "15-percent": "15-off",
+            "25-off-combo": "25-off-2-medium-pizza"
+          };
+          const effectivePrizeId = oldToNewIds[docSnap.id] || docSnap.id;
+          const matchedServer = SERVER_PRIZES.find((p) => p.id === effectivePrizeId) || {};
           activePrizes.push({
-            id: docSnap.id,
-            label: pData.name || pData.label || matchedServer.label || "Discount",
-            wheelLabel: pData.wheelLabel || matchedServer.wheelLabel || pData.name || pData.label,
-            subLabel: pData.subLabel || matchedServer.subLabel || "",
-            type: pData.type || matchedServer.type || (pData.isWinning ? "discount" : "no_win"),
-            value: pData.value !== undefined ? pData.value : matchedServer.value,
+            id: effectivePrizeId,
+            label: matchedServer.label || pData.name || pData.label || "Discount",
+            wheelLabel: matchedServer.wheelLabel || pData.wheelLabel || pData.name || pData.label,
+            subLabel: matchedServer.subLabel || pData.subLabel || "",
+            type: matchedServer.type || pData.type || (pData.isWinning ? "discount" : "no_win"),
+            value: matchedServer.value !== undefined ? matchedServer.value : pData.value,
             weight: typeof pData.weight === "number" ? pData.weight : (matchedServer.weight || 0),
             enabled: pData.enabled !== false,
-            couponPrefix: pData.couponPrefix !== undefined ? pData.couponPrefix : matchedServer.couponPrefix,
-            isWinningPrize: pData.isWinning !== undefined ? Boolean(pData.isWinning) : Boolean(matchedServer.isWinningPrize),
-            bgColor: pData.bgColor || matchedServer.bgColor || "#198C09",
-            textColor: pData.textColor || matchedServer.textColor || "#FFFFFF",
-            badge: pData.badge || matchedServer.badge || "OFFER",
-            accentColor: pData.accentColor || matchedServer.accentColor || "#FFD700",
+            couponPrefix: matchedServer.couponPrefix !== undefined ? matchedServer.couponPrefix : pData.couponPrefix,
+            isWinningPrize: matchedServer.isWinningPrize !== undefined ? Boolean(matchedServer.isWinningPrize) : (pData.isWinning !== undefined ? Boolean(pData.isWinning) : false),
+            bgColor: matchedServer.bgColor || pData.bgColor || "#198C09",
+            textColor: matchedServer.textColor || pData.textColor || "#FFFFFF",
+            badge: matchedServer.badge || pData.badge || "OFFER",
+            accentColor: matchedServer.accentColor || pData.accentColor || "#FFD700",
           });
         }
       });
     }
+
+    // Merge any new SERVER_PRIZES that aren't in Firestore yet
+    SERVER_PRIZES.forEach((serverPrize) => {
+      if (!activePrizes.find((p) => p.id === serverPrize.id)) {
+        activePrizes.push({ ...serverPrize });
+      }
+    });
 
     if (activePrizes.length === 0) {
       activePrizes = SERVER_PRIZES;

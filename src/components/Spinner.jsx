@@ -173,6 +173,26 @@ export default function Spinner({
               const labelY = 200 + labelRadius * Math.sin(textRad);
               const displayLabel = prize.wheelLabel || prize.label;
 
+              // Handle long sublabels by splitting them into two lines
+              const subLabelParts = [];
+              if (prize.subLabel) {
+                if (prize.subLabel.length > 15) {
+                  const mid = Math.floor(prize.subLabel.length / 2);
+                  let splitIndex = prize.subLabel.indexOf(' ', mid - 4);
+                  if (splitIndex === -1 || splitIndex > mid + 5) {
+                     splitIndex = prize.subLabel.indexOf(' ', Math.max(0, mid - 8));
+                  }
+                  if (splitIndex !== -1) {
+                    subLabelParts.push(prize.subLabel.substring(0, splitIndex));
+                    subLabelParts.push(prize.subLabel.substring(splitIndex + 1));
+                  } else {
+                    subLabelParts.push(prize.subLabel);
+                  }
+                } else {
+                  subLabelParts.push(prize.subLabel);
+                }
+              }
+
               return (
                 <g key={prize.id || idx} className="wheel-segment-group">
                   {/* Sector Path */}
@@ -201,7 +221,7 @@ export default function Spinner({
                   >
                     <text
                       x="0"
-                      y="-4"
+                      y={subLabelParts.length > 1 ? "-8" : "-4"}
                       textAnchor="middle"
                       fill={prize.textColor || "#FFFFFF"}
                       className="segment-main-label"
@@ -209,16 +229,21 @@ export default function Spinner({
                     >
                       {displayLabel}
                     </text>
-                    {prize.subLabel && (
+                    {subLabelParts.length > 0 && (
                       <text
                         x="0"
-                        y="12"
+                        y={subLabelParts.length > 1 ? "6" : "12"}
                         textAnchor="middle"
                         fill={prize.textColor || "#FFFFFF"}
                         opacity="0.85"
                         className="segment-sub-label"
+                        style={{ fontSize: subLabelParts.length > 1 ? "9px" : "10px" }}
                       >
-                        {prize.subLabel}
+                        {subLabelParts.map((part, i) => (
+                          <tspan key={i} x="0" dy={i === 0 ? "0" : "11"}>
+                            {part}
+                          </tspan>
+                        ))}
                       </text>
                     )}
                   </g>

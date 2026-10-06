@@ -98,24 +98,37 @@ export const fetchPrizesFromFirestore = async () => {
       const prizeId = docSnap.id || data.id;
 
       // Find matching local prize for UI metadata (colors, badges)
-      const localMatch = DEFAULT_PRIZES.find((p) => p.id === prizeId) || {};
+      const oldToNewIds = {
+        "10-percent": "10-off",
+        "15-percent": "15-off",
+        "25-off-combo": "25-off-2-medium-pizza"
+      };
+      const effectivePrizeId = oldToNewIds[prizeId] || prizeId;
+      const localMatch = DEFAULT_PRIZES.find((p) => p.id === effectivePrizeId) || {};
 
       fetchedPrizes.push({
-        id: prizeId,
-        label: data.name || data.label || localMatch.label || "Discount Reward",
-        wheelLabel: data.wheelLabel || localMatch.wheelLabel || data.name || data.label,
-        subLabel: data.subLabel || localMatch.subLabel || "",
-        type: data.type || localMatch.type || (data.isWinning ? "discount" : "no_win"),
-        value: data.value !== undefined ? data.value : localMatch.value,
+        id: effectivePrizeId,
+        label: localMatch.label || data.name || data.label || "Discount Reward",
+        wheelLabel: localMatch.wheelLabel || data.wheelLabel || data.name || data.label,
+        subLabel: localMatch.subLabel || data.subLabel || "",
+        type: localMatch.type || data.type || (data.isWinning ? "discount" : "no_win"),
+        value: localMatch.value !== undefined ? localMatch.value : data.value,
         weight: typeof data.weight === "number" ? data.weight : (localMatch.weight || 0),
         enabled: data.enabled !== false,
-        couponPrefix: data.couponPrefix !== undefined ? data.couponPrefix : (localMatch.couponPrefix || "ZUKAS"),
-        isWinningPrize: data.isWinning !== undefined ? Boolean(data.isWinning) : (data.isWinningPrize !== undefined ? Boolean(data.isWinningPrize) : Boolean(localMatch.isWinningPrize)),
-        bgColor: data.bgColor || localMatch.bgColor || "#198C09",
-        textColor: data.textColor || localMatch.textColor || "#FFFFFF",
-        badge: data.badge || localMatch.badge || "OFFER",
-        accentColor: data.accentColor || localMatch.accentColor || "#FFD700",
+        couponPrefix: localMatch.couponPrefix !== undefined ? localMatch.couponPrefix : (data.couponPrefix !== undefined ? data.couponPrefix : "ZUKAS"),
+        isWinningPrize: localMatch.isWinningPrize !== undefined ? Boolean(localMatch.isWinningPrize) : (data.isWinning !== undefined ? Boolean(data.isWinning) : Boolean(data.isWinningPrize)),
+        bgColor: localMatch.bgColor || data.bgColor || "#198C09",
+        textColor: localMatch.textColor || data.textColor || "#FFFFFF",
+        badge: localMatch.badge || data.badge || "OFFER",
+        accentColor: localMatch.accentColor || data.accentColor || "#FFD700",
       });
+    });
+
+    // Automatically merge any new local prizes that aren't in Firestore yet
+    DEFAULT_PRIZES.forEach((localPrize) => {
+      if (!fetchedPrizes.find((p) => p.id === localPrize.id)) {
+        fetchedPrizes.push({ ...localPrize });
+      }
     });
 
     // Sort fetchedPrizes to preserve exact canonical segment order matching DEFAULT_PRIZES
@@ -155,16 +168,16 @@ export const seedFirestoreDefaults = async () => {
   // 2. Seed prize documents
   const seedPrizes = [
     {
-      id: "25-off-combo",
-      name: "₹25 OFF ON ORDER COMBO",
+      id: "25-off-2-medium-pizza",
+      name: "₹25 OFF IN ORDER 2 MEDIUM PIZZA",
       weight: 10,
       enabled: true,
       couponPrefix: "ZUKAS25",
       isWinning: true,
     },
     {
-      id: "10-percent",
-      name: "10% OFF",
+      id: "10-off",
+      name: "₹10 OFF",
       weight: 55,
       enabled: true,
       couponPrefix: "ZUKAS10",
@@ -187,8 +200,8 @@ export const seedFirestoreDefaults = async () => {
       isWinning: false,
     },
     {
-      id: "15-percent",
-      name: "15% OFF",
+      id: "15-off",
+      name: "₹15 OFF",
       weight: 8,
       enabled: true,
       couponPrefix: "ZUKAS15",
@@ -202,6 +215,14 @@ export const seedFirestoreDefaults = async () => {
       couponPrefix: "ZUKAS30",
       isWinning: true,
     },
+    {
+      id: "free-campa-10",
+      name: "FREE CAMPA WORTH ₹10",
+      weight: 10,
+      enabled: true,
+      couponPrefix: "ZUKASCAMPA",
+      isWinning: true,
+    }
   ];
 
   for (const prize of seedPrizes) {

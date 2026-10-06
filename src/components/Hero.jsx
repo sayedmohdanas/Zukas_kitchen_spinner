@@ -93,6 +93,9 @@ export default function Hero({
                 <MapPin size={12} className="chip-pin" /> Bindwal
               </span>
               <span className="hero-location-chip">
+                <MapPin size={12} className="chip-pin" /> Dewabindwal
+              </span>
+              <span className="hero-location-chip">
                 <MapPin size={12} className="chip-pin" /> Jairajpur
               </span>
               <span className="hero-location-chip">
@@ -100,6 +103,15 @@ export default function Hero({
               </span>
               <span className="hero-location-chip">
                 <MapPin size={12} className="chip-pin" /> Hari Pur
+              </span>
+              <span className="hero-location-chip">
+                <MapPin size={12} className="chip-pin" /> Naseer Pur
+              </span>
+              <span className="hero-location-chip">
+                <MapPin size={12} className="chip-pin" /> Gulwa Gauri
+              </span>
+              <span className="hero-location-chip">
+                <MapPin size={12} className="chip-pin" /> Alauddin Patti
               </span>
             </div>
           </div>

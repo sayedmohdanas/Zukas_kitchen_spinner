@@ -55,18 +55,19 @@ Firestore Root
 │       └── updatedAt: ServerTimestamp
 │
 ├── prizes
-│   ├── 25-off-combo  → { name: "₹25 OFF ON ORDER COMBO", weight: 10, enabled: true, couponPrefix: "ZUKAS25", isWinning: true }
-│   ├── 10-percent    → { name: "10% OFF", weight: 55, enabled: true, couponPrefix: "ZUKAS10", isWinning: true }
+│   ├── 25-off-2-medium-pizza  → { name: "₹25 OFF IN ORDER 2 MEDIUM PIZZA", weight: 10, enabled: true, couponPrefix: "ZUKAS25", isWinning: true }
+│   ├── 10-off        → { name: "₹10 OFF", weight: 55, enabled: true, couponPrefix: "ZUKAS10", isWinning: true }
 │   ├── 20-off        → { name: "₹20 OFF", weight: 12, enabled: true, couponPrefix: "ZUKAS20", isWinning: true }
 │   ├── better-luck   → { name: "BETTER LUCK NEXT TIME", weight: 10, enabled: true, couponPrefix: null, isWinning: false }
-│   ├── 15-percent    → { name: "15% OFF", weight: 8, enabled: true, couponPrefix: "ZUKAS15", isWinning: true }
-│   └── 30-off        → { name: "₹30 OFF", weight: 5, enabled: true, couponPrefix: "ZUKAS30", isWinning: true }
+│   ├── 15-off        → { name: "₹15 OFF", weight: 8, enabled: true, couponPrefix: "ZUKAS15", isWinning: true }
+│   ├── 30-off        → { name: "₹30 OFF ON ORDER 3 ANY MEDIUM PIZZA", weight: 5, enabled: true, couponPrefix: "ZUKAS30", isWinning: true }
+│   └── free-campa-10 → { name: "FREE CAMPA WORTH ₹10", weight: 60, enabled: true, couponPrefix: "ZUKASCAMPA", isWinning: true }
 │
 └── spins
     └── {spinId}
         ├── mobile: "+919876543210" (string)
-        ├── prizeId: "10-percent" (string)
-        ├── prizeName: "10% OFF" (string)
+        ├── prizeId: "10-off" (string)
+        ├── prizeName: "₹10 OFF" (string)
         ├── couponCode: "ZUKAS10X7K2" (string|null)
         ├── campaignId: "spin_and_win" (string)
         └── createdAt: ServerTimestamp
@@ -119,22 +120,23 @@ To pause or shut down the Spin & Win campaign dynamically:
 To change selection probability directly from Firebase Console:
 
 1. Go to collection `prizes`.
-2. Select the prize document (e.g. `10-percent`).
+2. Select the prize document (e.g. `10-off`).
 3. Update the `weight` field (e.g. change `55` to `40`).
 4. Selection probability is calculated as `weight / sum(all_enabled_prize_weights)`.
 
 ---
 
-## 7. Current Prize Weights Summary Table
+## 7. Current Prize Weights Summary Table (7 Prizes)
 
 | Prize ID | Prize Name / Label | Weight | Probability | Coupon Format | Is Winning |
 |---|---|---|---|---|---|
-| `10-percent` | **10% OFF** | **55** | **55%** | `ZUKAS10XXXX` | Yes |
+| `10-off` | **₹10 OFF** | **55** | **55%** | `ZUKAS10XXXX` | Yes |
 | `20-off` | **₹20 OFF** | **12** | **12%** | `ZUKAS20XXXX` | Yes |
-| `25-off-combo` | **₹25 OFF ON ORDER COMBO** | **10** | **10%** | `ZUKAS25XXXX` | Yes |
+| `25-off-2-medium-pizza` | **₹25 OFF IN ORDER 2 MEDIUM PIZZA** | **10** | **10%** | `ZUKAS25XXXX` | Yes |
 | `better-luck` | **BETTER LUCK NEXT TIME** | **10** | **10%** | None (`null`) | No |
-| `15-percent` | **15% OFF** | **8** | **8%** | `ZUKAS15XXXX` | Yes |
-| `30-off` | **₹30 OFF** | **5** | **5%** | `ZUKAS30XXXX` | Yes |
+| `15-off` | **₹15 OFF** | **8** | **8%** | `ZUKAS15XXXX` | Yes |
+| `30-off` | **₹30 OFF ON ORDER 3 ANY MEDIUM PIZZA** | **5** | **5%** | `ZUKAS30XXXX` | Yes |
+| `free-campa-10` | **FREE CAMPA WORTH ₹10** | **60** | **~37.5%** | `ZUKASCAMPAXXXX` | Yes |
 
 ---
 

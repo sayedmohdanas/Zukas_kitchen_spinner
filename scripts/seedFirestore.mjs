@@ -67,16 +67,16 @@ async function seedAdminData() {
 
   const seedPrizes = [
     {
-      id: "25-off-combo",
-      name: "₹25 OFF ON ORDER COMBO",
+      id: "25-off-2-medium-pizza",
+      name: "₹25 OFF IN ORDER 2 MEDIUM PIZZA",
       weight: 10,
       enabled: true,
       couponPrefix: "ZUKAS25",
       isWinning: true,
     },
     {
-      id: "10-percent",
-      name: "10% OFF",
+      id: "10-off",
+      name: "₹10 OFF",
       weight: 55,
       enabled: true,
       couponPrefix: "ZUKAS10",
@@ -99,8 +99,8 @@ async function seedAdminData() {
       isWinning: false,
     },
     {
-      id: "15-percent",
-      name: "15% OFF",
+      id: "15-off",
+      name: "₹15 OFF",
       weight: 8,
       enabled: true,
       couponPrefix: "ZUKAS15",
@@ -108,15 +108,23 @@ async function seedAdminData() {
     },
     {
       id: "30-off",
-      name: "₹30 OFF",
+      name: "₹30 OFF ON ORDER 3 ANY MEDIUM PIZZA",
       weight: 5,
       enabled: true,
       couponPrefix: "ZUKAS30",
       isWinning: true,
     },
+    {
+      id: "free-campa-10",
+      name: "FREE CAMPA WORTH ₹10",
+      weight: 60,
+      enabled: true,
+      couponPrefix: "ZUKASCAMPA",
+      isWinning: true,
+    }
   ];
 
-  console.log("📌 Seeding 6 prize documents in collection: prizes");
+  console.log(`📌 Seeding ${seedPrizes.length} prize documents in collection: prizes`);
   for (const prize of seedPrizes) {
     const { id, ...prizeData } = prize;
     const prizeRef = db.collection("prizes").doc(id);

@@ -244,19 +244,31 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
                 />
               </div>
 
-              {/* Manual Address Input */}
+              {/* Village/Area Dropdown */}
               <div className="input-field-group">
                 <label htmlFor="delivery-address-input" className="input-sublabel">
-                  Delivery Address (optional):
+                  Delivery Village / Area:
                 </label>
-                <textarea
+                <input
+                  type="text"
                   id="delivery-address-input"
-                  rows={2}
-                  className="modal-textarea"
-                  placeholder="Enter house/flat number, street, area..."
+                  list="villages-list"
+                  className="modal-text-input"
+                  placeholder="Select or type your village/area..."
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                 />
+                <datalist id="villages-list">
+                  <option value="Khankah" />
+                  <option value="Bindwal" />
+                  <option value="Dewabindwal" />
+                  <option value="Jairajpur" />
+                  <option value="Jagmalpur" />
+                  <option value="Hari Pur" />
+                  <option value="Naseer Pur" />
+                  <option value="Gulwa Gauri" />
+                  <option value="Alauddin Patti" />
+                </datalist>
               </div>
 
               {/* Landmark Input */}

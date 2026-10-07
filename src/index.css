@@ -1795,6 +1795,21 @@ a {
   .final-spin-btn, .final-order-btn, .final-instagram-btn {
     width: 100%;
   }
+
+  .menu-whatsapp-footer-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .menu-whatsapp-footer-banner .banner-left {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .menu-general-whatsapp-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 540px) {

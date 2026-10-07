@@ -10,7 +10,7 @@ const app = initializeApp({ credential: cert(sa) });
 const db = getFirestore(app);
 
 const SERVER_PRIZES = [
-  { id: "25-off-2-medium-pizza", label: "₹25 OFF IN ORDER 2 MEDIUM PIZZA", weight: 10 },
+  { id: "25-off-2-medium-pizza", label: "₹25 OFF ON ORDER 2 MEDIUM PIZZA", weight: 10 },
   { id: "10-off", label: "₹10 OFF", weight: 55 },
   { id: "20-off", label: "₹20 OFF", weight: 12 },
   { id: "better-luck", label: "BETTER LUCK NEXT TIME", weight: 10 },

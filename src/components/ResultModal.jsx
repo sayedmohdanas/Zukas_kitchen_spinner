@@ -130,10 +130,13 @@ export default function ResultModal({
     }
   };
 
-  const handleWhatsAppOrder = () => {
-    trackEvent("order_clicked", { source: "result_modal_whatsapp", prize: prize.label, couponCode });
-    const link = getWhatsAppOrderLink(prize, couponCode, userName);
-    window.open(link, "_blank");
+  const handleExploreMenu = () => {
+    trackEvent("explore_menu_clicked", { source: "result_modal" });
+    onClose();
+    setTimeout(() => {
+      const menuEl = document.getElementById("menu");
+      if (menuEl) menuEl.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   };
 
   const handleWhatsAppExistingOrder = () => {
@@ -237,17 +240,17 @@ export default function ResultModal({
                 )}
 
                 <p className="coupon-disclaimer" style={{ marginBottom: "16px", textAlign: "center", fontWeight: "600" }}>
-                  You can use this coupon to place your order.
+                  Explore our menu to select your pizza and use this coupon!
                 </p>
 
                 <div className="modal-cta-group">
                   <button
                     type="button"
                     className="modal-primary-order-btn"
-                    onClick={handleWhatsAppExistingOrder}
+                    onClick={handleExploreMenu}
                   >
                     <MessageSquare size={20} />
-                    <span>💬 USE MY COUPON</span>
+                    <span>🍕 Select Pizza and Order</span>
                   </button>
 
                   <button
@@ -387,22 +390,24 @@ export default function ResultModal({
                       <ShieldCheck size={20} />
                       <span>COUPON CLAIMED SUCCESSFULLY{claimedMobile ? ` (${claimedMobile})` : ""}!</span>
                     </div>
-                    <p className="coupon-disclaimer" style={{ margin: 0, textAlign: "center" }}>
-                      Click below to order directly on WhatsApp with your coupon code pre-filled!
+                    <p className="coupon-disclaimer" style={{ margin: 0, textAlign: "center", marginBottom: "16px" }}>
+                      Explore our menu to select your pizza and use this coupon!
                     </p>
                   </div>
                 )}
 
                 {/* CTAs */}
                 <div className="modal-cta-group">
-                  <button
-                    type="button"
-                    className="modal-primary-order-btn"
-                    onClick={handleWhatsAppOrder}
-                  >
-                    <MessageSquare size={20} />
-                    <span>ORDER ON WHATSAPP</span>
-                  </button>
+                  {isClaimed && (
+                    <button
+                      type="button"
+                      className="modal-primary-order-btn"
+                      onClick={handleExploreMenu}
+                    >
+                      <MessageSquare size={20} />
+                      <span>🍕 Select Pizza and Order</span>
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -447,10 +452,10 @@ export default function ResultModal({
               <button
                 type="button"
                 className="modal-primary-order-btn"
-                onClick={handleWhatsAppOrder}
+                onClick={handleExploreMenu}
               >
                 <MessageSquare size={20} />
-                <span>ORDER ON WHATSAPP</span>
+                <span>🍕 Select Pizza and Order</span>
               </button>
 
               <button

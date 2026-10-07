@@ -48,7 +48,7 @@ function createMockReqRes(body = {}, method = "POST") {
 }
 
 async function runNameEntryCounterTests() {
-  console.log("🧪 TESTING FIRESTORE nameEntryCount ANALYTICS COUNTER IN /api/spin");
+  console.log("🧪 TESTING FIRESTORE nameEntryCount ANALYTICS COUNTER ON /api/spin");
   console.log("====================================================================");
 
   const db = getAdminDb();

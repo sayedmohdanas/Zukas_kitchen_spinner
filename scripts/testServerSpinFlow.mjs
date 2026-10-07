@@ -35,7 +35,7 @@ function simulateServerSpin({ mobileInput, clientPayload = {}, spinHistory = [],
 
     if (nowMs < nextEligibleTime) {
       const diffDays = Math.ceil((nextEligibleTime - nowMs) / (24 * 60 * 60 * 1000));
-      const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+      const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-ON", { day: "numeric", month: "short" });
       const msg = diffDays > 1
         ? `Your next spin is available in ${diffDays} days (on ${formattedDate}).`
         : `Your next spin is available tomorrow (on ${formattedDate}).`;

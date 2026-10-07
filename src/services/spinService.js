@@ -132,7 +132,7 @@ export const checkSpinEligibility = async (mobile, campaignConfig = DEFAULT_CAMP
   // Cooldown active -> BLOCK
   const diffMs = nextEligibleTime - now;
   const diffDays = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
-  const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-IN", {
+  const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-ON", {
     day: "numeric",
     month: "short",
   });

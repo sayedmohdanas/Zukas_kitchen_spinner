@@ -5,7 +5,7 @@ import { getWhatsAppOrderLink } from "../utils/whatsapp";
 import { trackEvent } from "../utils/analytics";
 import PizzaOrderModal from "./PizzaOrderModal";
 
-export default function MenuSection() {
+export default function MenuSection({ activeOffer }) {
   const [activeTab, setActiveTab] = useState("cards"); // "cards" | "poster"
   const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
   const [orderModalData, setOrderModalData] = useState(null); // { pizza, initialSize }
@@ -128,7 +128,7 @@ export default function MenuSection() {
                           handleOpenOrderModal(item, "small");
                         }}
                       >
-                        <span className="size-label">Small</span>
+                        <span className="size-label">Small (6 inch)</span>
                         <span className="size-price">₹{item.prices.small}</span>
                       </button>
 
@@ -140,7 +140,7 @@ export default function MenuSection() {
                           handleOpenOrderModal(item, "medium");
                         }}
                       >
-                        <span className="size-label">Medium</span>
+                        <span className="size-label">Medium (8 inch)</span>
                         <span className="size-price">₹{item.prices.medium}</span>
                       </button>
                     </div>
@@ -152,7 +152,7 @@ export default function MenuSection() {
                       onClick={() => handleOpenOrderModal(item, currentSize)}
                     >
                       <MessageSquare size={16} />
-                      <span>Order {currentSize === "small" ? "Small" : "Medium"} • ₹{currentPrice}</span>
+                      <span>Order {currentSize === "small" ? "Small (6 inch)" : "Medium (8 inch)"} • ₹{currentPrice}</span>
                     </button>
                   </div>
                 </div>
@@ -250,6 +250,7 @@ export default function MenuSection() {
         <PizzaOrderModal
           pizza={orderModalData.pizza}
           initialSize={orderModalData.initialSize}
+          activeOffer={activeOffer}
           onClose={() => setOrderModalData(null)}
         />
       )}

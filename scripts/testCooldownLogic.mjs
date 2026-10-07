@@ -28,7 +28,7 @@ function evaluateEligibility(spinHistory, campaignConfig, nowMs = Date.now()) {
 
   const diffMs = nextEligibleTime - nowMs;
   const diffDays = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
-  const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-ON", { day: "numeric", month: "short" });
 
   const message = diffDays > 1
     ? `Your next spin is available in ${diffDays} days (on ${formattedDate}).`

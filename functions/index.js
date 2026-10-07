@@ -6,7 +6,7 @@ const db = admin.firestore();
 
 // Server-side approved prize definitions and probability weights
 const SERVER_PRIZES = [
-  { id: "25-off-2-medium-pizza", label: "₹25 OFF IN ORDER 2 MEDIUM PIZZA", wheelLabel: "₹25 OFF", subLabel: "IN ORDER 2 MEDIUM PIZZA", type: "discount", value: 25, weight: 10, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS25", bgColor: "#198C09", textColor: "#FFFFFF", badge: "2 PIZZA DEAL", accentColor: "#FFD700" },
+  { id: "25-off-2-medium-pizza", label: "₹25 OFF ON ORDER 2 MEDIUM PIZZA", wheelLabel: "₹25 OFF", subLabel: "ON ORDER 2 MEDIUM PIZZA", type: "discount", value: 25, weight: 10, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS25", bgColor: "#198C09", textColor: "#FFFFFF", badge: "2 PIZZA DEAL", accentColor: "#FFD700" },
   { id: "10-off", label: "₹10 OFF", wheelLabel: "₹10 OFF", subLabel: "On Any Order", type: "discount", value: 10, weight: 55, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS10", bgColor: "#FF9F1C", textColor: "#1E293B", badge: "SAVINGS", accentColor: "#FFFFFF" },
   { id: "20-off", label: "₹20 OFF", wheelLabel: "₹20 OFF", subLabel: "Instant Savings", type: "discount", value: 20, weight: 12, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS20", bgColor: "#FFB703", textColor: "#1E293B", badge: "BONUS", accentColor: "#198C09" },
   { id: "better-luck", label: "BETTER LUCK NEXT TIME", wheelLabel: "BETTER LUCK", subLabel: "NEXT TIME", type: "no_win", value: null, weight: 10, enabled: true, isWinningPrize: false, couponPrefix: null, bgColor: "#334155", textColor: "#F8FAFC", badge: "TRY AGAIN", accentColor: "#94A3B8" },
@@ -106,7 +106,7 @@ exports.spinWheel = onCall({ cors: true }, async (request) => {
 
       if (nowMs < nextEligibleTime) {
         const diffDays = Math.ceil((nextEligibleTime - nowMs) / (24 * 60 * 60 * 1000));
-        const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+        const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-ON", { day: "numeric", month: "short" });
         const message = diffDays > 1
           ? `Your next spin is available in ${diffDays} days (on ${formattedDate}).`
           : `Your next spin is available tomorrow (on ${formattedDate}).`;

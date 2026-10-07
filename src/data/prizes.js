@@ -2,9 +2,9 @@
 const prizes = [
   {
     id: "25-off-2-medium-pizza",
-    label: "₹25 OFF IN ORDER 2 MEDIUM PIZZA",
+    label: "₹25 OFF ON ORDER 2 MEDIUM (8 inch) PIZZA",
     wheelLabel: "₹25 OFF",
-    subLabel: "IN ORDER 2 MEDIUM PIZZA",
+    subLabel: "ON ORDER 2 MEDIUM (8 inch) PIZZA",
     type: "discount",
     value: 25,
     weight: 10, // 10% probability
@@ -32,9 +32,9 @@ const prizes = [
   },
   {
     id: "20-off",
-    label: "₹20 OFF",
+    label: "₹20 OFF ON ANY MEDIUM (8 inch) PIZZA",
     wheelLabel: "₹20 OFF",
-    subLabel: "Instant Savings",
+    subLabel: "On Any Medium (8 inch) Pizza",
     type: "discount",
     value: 20,
     weight: 12, // 12% probability
@@ -77,9 +77,9 @@ const prizes = [
   },
   {
     id: "30-off",
-    label: "₹30 OFF ON ORDER 3 ANY MEDIUM PIZZA",
+    label: "₹30 OFF ON ORDER 3 ANY MEDIUM (8 inch) PIZZA",
     wheelLabel: "₹30 OFF",
-    subLabel: "ON ORDER 3 ANY MEDIUM PIZZA",
+    subLabel: "ON ORDER 3 ANY MEDIUM (8 inch) PIZZA",
     type: "discount",
     value: 30,
     weight: 5, // 5% probability

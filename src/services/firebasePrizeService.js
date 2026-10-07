@@ -169,7 +169,7 @@ export const seedFirestoreDefaults = async () => {
   const seedPrizes = [
     {
       id: "25-off-2-medium-pizza",
-      name: "₹25 OFF IN ORDER 2 MEDIUM PIZZA",
+      name: "₹25 OFF ON ORDER 2 MEDIUM PIZZA",
       weight: 10,
       enabled: true,
       couponPrefix: "ZUKAS25",

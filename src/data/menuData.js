@@ -8,7 +8,7 @@ import chickenTikkaImg from "../assets/pizzas/chicken_tikka.jpg";
 
 export const menuHeader = {
   title: "From Our Kitchen to You",
-  openingTime: "4 PM to 9 PM",
+  openingTime: "Mon-Fri: 2 PM - 9 PM | Sat-Sun: 9 AM - 9 PM",
   tagline: "HOT & FRESH PIZZA DELIVERED TO YOUR DOORSTEP",
   phone: "9194130132",
   posterImage: zukasMenuPoster,

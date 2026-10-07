@@ -8,7 +8,7 @@ import { config } from "../config/config.js";
  * @param {string|null} userName 
  * @returns {string}
  */
-export const getWhatsAppOrderLink = (prize = null, couponCode = null, userName = null) => {
+export const getWhatsAppOrderLink = (prize = null, couponCode = null, userName = null, selectedPizza = null, selectedSize = null, selectedPrice = null) => {
   const number = config.whatsappNumber;
 
   let greeting = "Hi Zukas Kitchen! 🍕";
@@ -28,10 +28,21 @@ export const getWhatsAppOrderLink = (prize = null, couponCode = null, userName =
     }
   }
 
+  let pizzaText = "";
+  if (selectedPizza) {
+    pizzaText = `\n\nI'd like to order:\nPizza: ${selectedPizza}`;
+    if (selectedSize) {
+      pizzaText += `\nSize: ${selectedSize.charAt(0).toUpperCase() + selectedSize.slice(1)}`;
+    }
+    if (selectedPrice) {
+      pizzaText += `\nPrice: ₹${selectedPrice}`;
+    }
+  }
+
   if (isWinning && finalOfferText && couponCode) {
-    messageText = `${greeting}\n\nI have an active Spin & Win offer 🎉\n\nOffer: ${finalOfferText}\nCoupon Code: ${couponCode}\n\nI'd like to place an order.`;
+    messageText = `${greeting}\n\nI have an active Spin & Win offer 🎉\n\nOffer: ${finalOfferText}\nCoupon Code: ${couponCode}${pizzaText ? pizzaText : "\n\nI'd like to place an order."}`;
   } else {
-    messageText = `${greeting}\n\nI'd like to place an order.`;
+    messageText = `${greeting}${pizzaText ? pizzaText : "\n\nI'd like to place an order."}`;
   }
 
   const encodedMessage = encodeURIComponent(messageText);
@@ -52,6 +63,7 @@ export const getWhatsAppPizzaOrderLink = ({
   deliveryAddress = "",
   landmark = "",
   locationUrl = "",
+  activeOffer = null,
 }) => {
   const number = config.whatsappNumber;
   const sizeLabel = size === "small" ? "Small" : "Medium";
@@ -84,7 +96,12 @@ export const getWhatsAppPizzaOrderLink = ({
     }
   }
 
-  const messageText = `${greeting}\n\nI'd like to order:\n\nPizza: ${pizzaName}\nSize: ${sizeLabel}\nPizza Price: ₹${basePrice}\nExtra Cheese: ${extraCheeseText}\n\nTotal: ₹${totalPrice}${deliverySection}\n\nPlease confirm my order. Thank you!`;
+  let offerText = "";
+  if (activeOffer && activeOffer.couponCode) {
+    offerText = `\n\n🎉 Active Offer: ${activeOffer.prizeName}\n🎟️ Coupon Code: ${activeOffer.couponCode}`;
+  }
+
+  const messageText = `${greeting}\n\nI'd like to order:\n\nPizza: ${pizzaName}\nSize: ${sizeLabel}\nPizza Price: ₹${basePrice}\nExtra Cheese: ${extraCheeseText}\n\nTotal: ₹${totalPrice}${deliverySection}${offerText}\n\nPlease confirm my order. Thank you!`;
 
   return `https://wa.me/${number}?text=${encodeURIComponent(messageText)}`;
 };

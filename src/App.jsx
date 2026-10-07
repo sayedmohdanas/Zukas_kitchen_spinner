@@ -27,6 +27,7 @@ export default function App() {
   const [showResult, setShowResult] = useState(false);
   const [hasSpun, setHasSpun] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [activeOffer, setActiveOffer] = useState(null);
 
   // Firebase integration state
   const [prizesList, setPrizesList] = useState(DEFAULT_PRIZES);
@@ -109,12 +110,16 @@ export default function App() {
     trackEvent("spin_completed", { prize: selectedPrize?.label, name: userName });
   };
 
-  const handleClaimSuccess = ({ mobile, couponCode: updatedCode }) => {
+  const handleClaimSuccess = ({ mobile, couponCode: updatedCode, prizeName }) => {
     setIsClaimed(true);
     setClaimedMobile(mobile);
     if (updatedCode) {
       setCouponCode(updatedCode);
     }
+    setActiveOffer({
+      prizeName: prizeName || selectedPrize?.label,
+      couponCode: updatedCode || couponCode,
+    });
     trackEvent("coupon_claimed", { mobile, prize: selectedPrize?.label });
   };
 
@@ -145,7 +150,7 @@ export default function App() {
         />
 
         {/* Zukas Kitchen Pizza Menu Section */}
-        <MenuSection />
+        <MenuSection activeOffer={activeOffer} />
 
         {/* How It Works Section */}
         <HowItWorks />
@@ -181,6 +186,7 @@ export default function App() {
           isClaimed={isClaimed}
           claimedMobile={claimedMobile}
           onClaimSuccess={handleClaimSuccess}
+          onExistingCouponRecovered={(coupon) => setActiveOffer({ prizeName: coupon.prizeName, couponCode: coupon.couponCode })}
           onClose={() => setShowResult(false)}
         />
       )}

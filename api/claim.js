@@ -187,7 +187,7 @@ export default async function handler(req, res) {
           const isBlockedByCooldown = !campaignConfig.repeatEnabled || (nowMs < nextEligibleTime);
 
           if (isBlockedByCooldown) {
-            const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-IN", {
+            const formattedDate = new Date(nextEligibleTime).toLocaleDateString("en-ON", {
               day: "numeric",
               month: "short",
             });

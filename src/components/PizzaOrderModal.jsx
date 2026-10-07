@@ -4,7 +4,7 @@ import { getWhatsAppPizzaOrderLink } from "../utils/whatsapp";
 import { trackEvent } from "../utils/analytics";
 import LocationPickerMap from "./LocationPickerMap";
 
-export default function PizzaOrderModal({ pizza, initialSize = "small", onClose }) {
+export default function PizzaOrderModal({ pizza, initialSize = "small", activeOffer, onClose }) {
   const [selectedSize, setSelectedSize] = useState(initialSize);
   const [hasExtraCheese, setHasExtraCheese] = useState(false);
 
@@ -41,7 +41,7 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
   const basePrice = pizza.prices[selectedSize];
   const extraCheesePrice = 25;
   const totalPrice = basePrice + (hasExtraCheese ? extraCheesePrice : 0);
-  const sizeLabel = selectedSize === "small" ? "Small" : "Medium";
+  const sizeLabel = selectedSize === "small" ? "Small (6 inch)" : "Medium (8 inch)";
 
   // Handle Dragging Marker on Interactive Map
   const handleLocationChange = (newCoords) => {
@@ -131,6 +131,7 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
       deliveryAddress,
       landmark,
       locationUrl,
+      activeOffer,
     });
 
     window.open(link, "_blank");
@@ -178,11 +179,13 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
                 onClick={() => setSelectedSize("small")}
               >
                 <div className="size-card-info">
-                  <span className="size-card-name">Small</span>
+                  <span className="size-card-name">Small (6 inch)</span>
                   <span className="size-card-desc">Personal Size</span>
                 </div>
-                <span className="size-card-price">₹{pizza.prices.small}</span>
-                {selectedSize === "small" && <Check size={18} className="size-check-icon" />}
+                <div className="size-price-group">
+                  <span className="size-card-price">₹{pizza.prices.small}</span>
+                  {selectedSize === "small" && <Check size={18} className="size-check-icon" />}
+                </div>
               </button>
 
               <button
@@ -191,11 +194,13 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", onClose 
                 onClick={() => setSelectedSize("medium")}
               >
                 <div className="size-card-info">
-                  <span className="size-card-name">Medium</span>
+                  <span className="size-card-name">Medium (8 inch)</span>
                   <span className="size-card-desc">Sharing Size</span>
                 </div>
-                <span className="size-card-price">₹{pizza.prices.medium}</span>
-                {selectedSize === "medium" && <Check size={18} className="size-check-icon" />}
+                <div className="size-price-group">
+                  <span className="size-card-price">₹{pizza.prices.medium}</span>
+                  {selectedSize === "medium" && <Check size={18} className="size-check-icon" />}
+                </div>
               </button>
             </div>
           </div>

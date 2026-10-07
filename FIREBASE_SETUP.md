@@ -55,7 +55,7 @@ Firestore Root
 │       └── updatedAt: ServerTimestamp
 │
 ├── prizes
-│   ├── 25-off-2-medium-pizza  → { name: "₹25 OFF IN ORDER 2 MEDIUM PIZZA", weight: 10, enabled: true, couponPrefix: "ZUKAS25", isWinning: true }
+│   ├── 25-off-2-medium-pizza  → { name: "₹25 OFF ON ORDER 2 MEDIUM PIZZA", weight: 10, enabled: true, couponPrefix: "ZUKAS25", isWinning: true }
 │   ├── 10-off        → { name: "₹10 OFF", weight: 55, enabled: true, couponPrefix: "ZUKAS10", isWinning: true }
 │   ├── 20-off        → { name: "₹20 OFF", weight: 12, enabled: true, couponPrefix: "ZUKAS20", isWinning: true }
 │   ├── better-luck   → { name: "BETTER LUCK NEXT TIME", weight: 10, enabled: true, couponPrefix: null, isWinning: false }
@@ -132,7 +132,7 @@ To change selection probability directly from Firebase Console:
 |---|---|---|---|---|---|
 | `10-off` | **₹10 OFF** | **55** | **55%** | `ZUKAS10XXXX` | Yes |
 | `20-off` | **₹20 OFF** | **12** | **12%** | `ZUKAS20XXXX` | Yes |
-| `25-off-2-medium-pizza` | **₹25 OFF IN ORDER 2 MEDIUM PIZZA** | **10** | **10%** | `ZUKAS25XXXX` | Yes |
+| `25-off-2-medium-pizza` | **₹25 OFF ON ORDER 2 MEDIUM PIZZA** | **10** | **10%** | `ZUKAS25XXXX` | Yes |
 | `better-luck` | **BETTER LUCK NEXT TIME** | **10** | **10%** | None (`null`) | No |
 | `15-off` | **₹15 OFF** | **8** | **8%** | `ZUKAS15XXXX` | Yes |
 | `30-off` | **₹30 OFF ON ORDER 3 ANY MEDIUM PIZZA** | **5** | **5%** | `ZUKAS30XXXX` | Yes |

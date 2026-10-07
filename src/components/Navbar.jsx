@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { MessageSquare, Menu as MenuIcon, X, PhoneCall } from "lucide-react";
+import { MessageSquare, Menu as MenuIcon, X, PhoneCall, Moon, Sun } from "lucide-react";
 import InstagramIcon from "./icons/InstagramIcon";
 import { config } from "../config/config";
 import { trackEvent } from "../utils/analytics";
 import { getWhatsAppOrderLink } from "../utils/whatsapp";
 import zukasLogo from "../assets/zukasKirchenlogo.jpg";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isDarkMode, toggleTheme } = useTheme();
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
@@ -97,6 +99,17 @@ export default function Navbar() {
             title="Follow us on Instagram"
           >
             <InstagramIcon size={18} />
+          </button>
+
+          <button
+            type="button"
+            className="navbar-instagram-icon-btn"
+            onClick={toggleTheme}
+            aria-label="Toggle Dark Theme"
+            title="Toggle Dark Theme"
+            style={{ marginLeft: '8px', color: 'var(--text-main)' }}
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
           <button

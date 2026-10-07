@@ -40,8 +40,9 @@ const AddReviewModal = ({ isOpen, onClose, onReviewAdded }) => {
 
   return (
     <div className="pizza-order-modal-overlay">
-      <div className="pizza-order-modal-content" style={{ padding: "32px", overflowY: "auto" }}>
-        <button className="modal-close-btn" onClick={onClose} disabled={isSubmitting}>
+      <div className="pizza-order-modal-content" style={{ overflowY: "auto" }}>
+        <div style={{ padding: "24px", boxSizing: "border-box" }}>
+          <button className="modal-close-btn" onClick={onClose} disabled={isSubmitting}>
           <X size={24} />
         </button>
 
@@ -131,6 +132,7 @@ const AddReviewModal = ({ isOpen, onClose, onReviewAdded }) => {
             )}
           </button>
         </form>
+        </div>
       </div>
     </div>
   );

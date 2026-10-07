@@ -2967,7 +2967,7 @@ a {
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--zukas-border);
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--zukas-dark);
   background: #FFFFFF;
   resize: vertical;
@@ -2986,7 +2986,7 @@ a {
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--zukas-border);
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--zukas-dark);
   background: #FFFFFF;
   outline: none;

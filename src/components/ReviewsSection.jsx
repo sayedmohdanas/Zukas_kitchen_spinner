@@ -48,10 +48,35 @@ const ReviewsSection = () => {
 
   useEffect(() => {
     loadReviews();
+
+    // Check if the user visited via a direct review link
+    if (window.location.search.includes("review=true") || window.location.hash.includes("review")) {
+      // Use an interval to repeatedly check for the element until it renders properly (useful for slow mobile webviews)
+      let attempts = 0;
+      const scrollInterval = setInterval(() => {
+        const section = document.getElementById("review");
+        if (section) {
+          // Calculate exact position and jump to it instantly (most reliable method for iOS/WhatsApp browsers)
+          const yOffset = -50; // offset slightly above the section
+          const y = section.getBoundingClientRect().top + window.scrollY + yOffset;
+          window.scrollTo({ top: y, behavior: "auto" });
+          
+          setIsModalOpen(true);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          clearInterval(scrollInterval);
+        }
+        
+        attempts++;
+        if (attempts > 10) {
+          clearInterval(scrollInterval); // give up after 5 seconds
+          setIsModalOpen(true);
+        }
+      }, 500);
+    }
   }, []);
 
   return (
-    <section className="reviews-section">
+    <section id="review" className="reviews-section">
       <div className="reviews-header">
         <div className="section-badge reviews-badge">
           <MessageCircleHeart size={16} className="badge-icon" />

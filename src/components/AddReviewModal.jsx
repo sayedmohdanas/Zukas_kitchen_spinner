@@ -39,8 +39,8 @@ const AddReviewModal = ({ isOpen, onClose, onReviewAdded }) => {
   };
 
   return (
-    <div className="modal-backdrop-overlay">
-      <div className="terms-modal-card review-form-modal">
+    <div className="pizza-order-modal-overlay">
+      <div className="pizza-order-modal-content" style={{ padding: "32px", overflowY: "auto" }}>
         <button className="modal-close-btn" onClick={onClose} disabled={isSubmitting}>
           <X size={24} />
         </button>

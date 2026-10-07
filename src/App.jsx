@@ -5,6 +5,7 @@ import MenuSection from "./components/MenuSection";
 import HowItWorks from "./components/HowItWorks";
 import PromoBanner from "./components/PromoBanner";
 import WhyZukas from "./components/WhyZukas";
+import ReviewsSection from "./components/ReviewsSection";
 import FinalCTA from "./components/FinalCTA";
 import ResultModal from "./components/ResultModal";
 import TermsModal from "./components/TermsModal";
@@ -151,6 +152,9 @@ export default function App() {
 
         {/* Zukas Kitchen Pizza Menu Section */}
         <MenuSection activeOffer={activeOffer} />
+
+        {/* Customer Reviews Section */}
+        <ReviewsSection />
 
         {/* How It Works Section */}
         <HowItWorks />

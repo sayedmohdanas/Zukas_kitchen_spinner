@@ -20,5 +20,12 @@ service cloud.firestore {
     match /spins/{spinId} {
       allow read, write: if false;
     }
+
+    // Public read and create for customer reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false; // Admin deletes from console
+    }
   }
 }

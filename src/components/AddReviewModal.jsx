@@ -61,7 +61,7 @@ const AddReviewModal = ({ isOpen, onClose, onReviewAdded }) => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Rahul M."
+              placeholder="e.g. Mohd Anas"
               disabled={isSubmitting}
               maxLength={30}
               required

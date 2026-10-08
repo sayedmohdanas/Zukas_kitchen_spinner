@@ -2865,7 +2865,7 @@ a {
 
 /* Extra Cheese Toggle Card */
 .extra-cheese-toggle-card {
-  background: #FFFDF9;
+  background: var(--zukas-surface);
   border: 2px solid var(--zukas-border);
   border-radius: var(--radius-md);
   padding: 14px 16px;

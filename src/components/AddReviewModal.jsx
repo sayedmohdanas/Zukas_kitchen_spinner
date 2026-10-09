@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { X, Star, Loader2, MessageSquareHeart } from "lucide-react";
 import { addReview } from "../services/firebaseReviewService";
 
-const AddReviewModal = ({ isOpen, onClose, onReviewAdded }) => {
+const AddReviewModal = ({ isOpen, onClose, onReviewAdded, villagesList = [] }) => {
   const [name, setName] = useState("");
   const [rating, setRating] = useState(5);
   const [village, setVillage] = useState("");
@@ -80,15 +80,21 @@ const AddReviewModal = ({ isOpen, onClose, onReviewAdded }) => {
               maxLength={40}
             />
             <datalist id="review-villages-list">
-              <option value="Khankah" />
-              <option value="Bindwal" />
-              <option value="Dewabindwal" />
-              <option value="Jairajpur" />
-              <option value="Jagmalpur" />
-              <option value="Hari Pur" />
-              <option value="Naseer Pur" />
-              <option value="Gulwa Gauri" />
-              <option value="Alauddin Patti" />
+              {villagesList.length > 0 ? villagesList.map(v => (
+                <option key={v.id} value={v.name} />
+              )) : (
+                <>
+                  <option value="Khankah" />
+                  <option value="Bindwal" />
+                  <option value="Dewabindwal" />
+                  <option value="Jairajpur" />
+                  <option value="Jagmalpur" />
+                  <option value="Hari Pur" />
+                  <option value="Naseer Pur" />
+                  <option value="Gulwa Gauri" />
+                  <option value="Alauddin Patti" />
+                </>
+              )}
             </datalist>
           </div>
 

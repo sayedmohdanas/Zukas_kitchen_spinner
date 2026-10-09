@@ -12,7 +12,7 @@ import TermsModal from "./components/TermsModal";
 import Footer from "./components/Footer";
 import FloatingWhatsAppCTA from "./components/FloatingWhatsAppCTA";
 import { spinWheelService } from "./services/spinService";
-import { fetchCampaignConfig, fetchPrizesFromFirestore, DEFAULT_PRIZES, DEFAULT_CAMPAIGN_CONFIG } from "./services/firebasePrizeService";
+import { fetchCampaignConfig, fetchPrizesFromFirestore, fetchVillagesFromFirestore, DEFAULT_PRIZES, DEFAULT_CAMPAIGN_CONFIG } from "./services/firebasePrizeService";
 import { trackEvent } from "./utils/analytics";
 
 export default function App() {
@@ -32,6 +32,7 @@ export default function App() {
 
   // Firebase integration state
   const [prizesList, setPrizesList] = useState(DEFAULT_PRIZES);
+  const [villagesList, setVillagesList] = useState([]);
   const [campaignConfig, setCampaignConfig] = useState(DEFAULT_CAMPAIGN_CONFIG);
   const [isLoadingCampaign, setIsLoadingCampaign] = useState(true);
 
@@ -43,14 +44,16 @@ export default function App() {
     const loadFirebaseData = async () => {
       try {
         setIsLoadingCampaign(true);
-        const [configData, prizesData] = await Promise.all([
+        const [configData, prizesData, villagesData] = await Promise.all([
           fetchCampaignConfig(),
           fetchPrizesFromFirestore(),
+          fetchVillagesFromFirestore(),
         ]);
 
         if (isMounted) {
           if (configData) setCampaignConfig(configData);
           if (prizesData && prizesData.length > 0) setPrizesList(prizesData);
+          if (villagesData && villagesData.length > 0) setVillagesList(villagesData);
         }
       } catch (err) {
         console.warn("Could not load Firebase configuration, using default configuration:", err);
@@ -148,13 +151,14 @@ export default function App() {
           campaignEnabled={campaignConfig.enabled}
           isLoadingCampaign={isLoadingCampaign}
           prizesList={prizesList}
+          villagesList={villagesList}
         />
 
         {/* Zukas Kitchen Pizza Menu Section */}
-        <MenuSection activeOffer={activeOffer} />
+        <MenuSection activeOffer={activeOffer} villagesList={villagesList} />
 
         {/* Customer Reviews Section */}
-        <ReviewsSection />
+        <ReviewsSection villagesList={villagesList} />
 
         {/* How It Works Section */}
         <HowItWorks />

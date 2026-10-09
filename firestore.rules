@@ -8,10 +8,10 @@ service cloud.firestore {
       allow write: if false; // Admin SDK / Console only
     }
 
-    // Public read-only access for prize display metadata
+    // Public read and write access for prizes (so dashboard can edit them)
+    // NOTE: In production, this should be secured with authentication
     match /prizes/{prizeId} {
-      allow read: if true;
-      allow write: if false; // Admin SDK / Console only
+      allow read, write: if true;
     }
 
     // Public direct reads and writes to spins collection are COMPLETELY BLOCKED!
@@ -21,11 +21,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Public read and create for customer reviews
+    // Public read and write for villages list
+    match /villages/{villageId} {
+      allow read, write: if true;
+    }
+
+    // Public read, create, update, delete for customer reviews
     match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if true;
-      allow update, delete: if false; // Admin deletes from console
+      allow read, write: if true;
     }
   }
 }

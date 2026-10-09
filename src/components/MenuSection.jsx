@@ -5,7 +5,7 @@ import { getWhatsAppOrderLink } from "../utils/whatsapp";
 import { trackEvent } from "../utils/analytics";
 import PizzaOrderModal from "./PizzaOrderModal";
 
-export default function MenuSection({ activeOffer }) {
+export default function MenuSection({ activeOffer, villagesList = [] }) {
   const [activeTab, setActiveTab] = useState("cards"); // "cards" | "poster"
   const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
   const [orderModalData, setOrderModalData] = useState(null); // { pizza, initialSize }
@@ -251,6 +251,7 @@ export default function MenuSection({ activeOffer }) {
           pizza={orderModalData.pizza}
           initialSize={orderModalData.initialSize}
           activeOffer={activeOffer}
+          villagesList={villagesList}
           onClose={() => setOrderModalData(null)}
         />
       )}

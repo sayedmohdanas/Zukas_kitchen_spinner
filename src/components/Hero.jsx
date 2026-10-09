@@ -22,6 +22,7 @@ export default function Hero({
   campaignEnabled = true,
   isLoadingCampaign = false,
   prizesList = [],
+  villagesList = [],
 }) {
   const handleScrollToMenu = () => {
     trackEvent("nav_click", { source: "hero_highlighted_menu_btn" });
@@ -86,33 +87,17 @@ export default function Hero({
               <span>Delivery Available In:</span>
             </div>
             <div className="hero-location-chips">
-              <span className="hero-location-chip">
-                <MapPin size={12} className="chip-pin" /> Khankah
-              </span>
-              <span className="hero-location-chip">
-                <MapPin size={12} className="chip-pin" /> Bindwal
-              </span>
-              <span className="hero-location-chip">
-                <MapPin size={12} className="chip-pin" /> Dewabindwal
-              </span>
-              <span className="hero-location-chip">
-                <MapPin size={12} className="chip-pin" /> Jairajpur
-              </span>
-              <span className="hero-location-chip">
-                <MapPin size={12} className="chip-pin" /> Jagmalpur
-              </span>
-              <span className="hero-location-chip">
-                <MapPin size={12} className="chip-pin" /> Hari Pur
-              </span>
-              <span className="hero-location-chip">
-                <MapPin size={12} className="chip-pin" /> Naseer Pur
-              </span>
-              <span className="hero-location-chip">
-                <MapPin size={12} className="chip-pin" /> Gulwa Gauri
-              </span>
-              <span className="hero-location-chip">
-                <MapPin size={12} className="chip-pin" /> Alauddin Patti
-              </span>
+              {villagesList.length > 0 ? villagesList.map(v => (
+                <span key={v.id} className="hero-location-chip">
+                  <MapPin size={12} className="chip-pin" /> {v.name}
+                </span>
+              )) : (
+                <>
+                  <span className="hero-location-chip"><MapPin size={12} className="chip-pin" /> Khankah</span>
+                  <span className="hero-location-chip"><MapPin size={12} className="chip-pin" /> Bindwal</span>
+                  <span className="hero-location-chip"><MapPin size={12} className="chip-pin" /> Dewabindwal</span>
+                </>
+              )}
             </div>
           </div>
 

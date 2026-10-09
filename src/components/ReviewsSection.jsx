@@ -30,7 +30,7 @@ const fallbackReviews = [
   }
 ];
 
-const ReviewsSection = () => {
+const ReviewsSection = ({ villagesList = [] }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -125,6 +125,7 @@ const ReviewsSection = () => {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onReviewAdded={loadReviews}
+        villagesList={villagesList}
       />
     </section>
   );

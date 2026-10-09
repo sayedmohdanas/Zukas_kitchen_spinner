@@ -108,19 +108,19 @@ export const fetchPrizesFromFirestore = async () => {
 
       fetchedPrizes.push({
         id: effectivePrizeId,
-        label: localMatch.label || data.name || data.label || "Discount Reward",
-        wheelLabel: localMatch.wheelLabel || data.wheelLabel || data.name || data.label,
-        subLabel: localMatch.subLabel || data.subLabel || "",
-        type: localMatch.type || data.type || (data.isWinning ? "discount" : "no_win"),
-        value: localMatch.value !== undefined ? localMatch.value : data.value,
+        label: data.label !== undefined ? data.label : (data.name !== undefined ? data.name : (localMatch.label || "Discount Reward")),
+        wheelLabel: data.wheelLabel !== undefined ? data.wheelLabel : (localMatch.wheelLabel || data.label || data.name),
+        subLabel: data.subLabel !== undefined ? data.subLabel : (localMatch.subLabel || ""),
+        type: data.type || localMatch.type || (data.isWinning ? "discount" : "no_win"),
+        value: data.value !== undefined ? data.value : localMatch.value,
         weight: typeof data.weight === "number" ? data.weight : (localMatch.weight || 0),
         enabled: data.enabled !== false,
-        couponPrefix: localMatch.couponPrefix !== undefined ? localMatch.couponPrefix : (data.couponPrefix !== undefined ? data.couponPrefix : "ZUKAS"),
-        isWinningPrize: localMatch.isWinningPrize !== undefined ? Boolean(localMatch.isWinningPrize) : (data.isWinning !== undefined ? Boolean(data.isWinning) : Boolean(data.isWinningPrize)),
-        bgColor: localMatch.bgColor || data.bgColor || "#198C09",
-        textColor: localMatch.textColor || data.textColor || "#FFFFFF",
-        badge: localMatch.badge || data.badge || "OFFER",
-        accentColor: localMatch.accentColor || data.accentColor || "#FFD700",
+        couponPrefix: data.couponPrefix !== undefined ? data.couponPrefix : (localMatch.couponPrefix !== undefined ? localMatch.couponPrefix : "ZUKAS"),
+        isWinningPrize: data.isWinning !== undefined ? Boolean(data.isWinning) : (localMatch.isWinningPrize !== undefined ? Boolean(localMatch.isWinningPrize) : Boolean(data.isWinningPrize)),
+        bgColor: data.bgColor || localMatch.bgColor || "#198C09",
+        textColor: data.textColor || localMatch.textColor || "#FFFFFF",
+        badge: data.badge || localMatch.badge || "OFFER",
+        accentColor: data.accentColor || localMatch.accentColor || "#FFD700",
       });
     });
 
@@ -145,6 +145,40 @@ export const fetchPrizesFromFirestore = async () => {
   }
 };
 
+export const fetchVillagesFromFirestore = async () => {
+  try {
+    const villagesRef = collection(db, "villages");
+    const snapshot = await getDocs(villagesRef);
+    const uniqueVillagesMap = new Map();
+    snapshot.forEach((doc) => {
+      const name = doc.data().name.trim();
+      const normalized = name.toLowerCase();
+      if (!uniqueVillagesMap.has(normalized)) {
+        uniqueVillagesMap.set(normalized, { id: doc.id, name });
+      }
+    });
+    const villages = Array.from(uniqueVillagesMap.values());
+    
+    const PREFERRED_ORDER = [
+      "khankah", "bindwal", "jairajpur", "jagmalpur", "hari pur", "haripur", 
+      "alauddin patti", "alauddin pat", "gulwa gauri", "gulwa", "naseer pur", "naseerpur"
+    ];
+    
+    return villages.sort((a,b) => {
+      const aLower = a.name.toLowerCase();
+      const bLower = b.name.toLowerCase();
+      let rankA = PREFERRED_ORDER.findIndex(p => aLower.includes(p));
+      let rankB = PREFERRED_ORDER.findIndex(p => bLower.includes(p));
+      rankA = rankA === -1 ? 999 : rankA;
+      rankB = rankB === -1 ? 999 : rankB;
+      if (rankA !== rankB) return rankA - rankB;
+      return a.name.localeCompare(b.name);
+    });
+  } catch (error) {
+    console.error("Error fetching villages:", error);
+    return [];
+  }
+};
 /**
  * Utility helper to seed Firestore with the initial approved campaign and prize documents.
  * Includes repeatEnabled: true and repeatAfterDays: 2.

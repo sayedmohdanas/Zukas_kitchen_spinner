@@ -4,7 +4,7 @@ import { getWhatsAppPizzaOrderLink } from "../utils/whatsapp";
 import { trackEvent } from "../utils/analytics";
 import LocationPickerMap from "./LocationPickerMap";
 
-export default function PizzaOrderModal({ pizza, initialSize = "small", activeOffer, onClose }) {
+export default function PizzaOrderModal({ pizza, initialSize = "small", activeOffer, villagesList = [], onClose }) {
   const [selectedSize, setSelectedSize] = useState(initialSize);
   const [hasExtraCheese, setHasExtraCheese] = useState(false);
 
@@ -264,15 +264,21 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", activeOf
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                 />
                 <datalist id="villages-list">
-                  <option value="Khankah" />
-                  <option value="Bindwal" />
-                  <option value="Dewabindwal" />
-                  <option value="Jairajpur" />
-                  <option value="Jagmalpur" />
-                  <option value="Hari Pur" />
-                  <option value="Naseer Pur" />
-                  <option value="Gulwa Gauri" />
-                  <option value="Alauddin Patti" />
+                  {villagesList.length > 0 ? villagesList.map(v => (
+                    <option key={v.id} value={v.name} />
+                  )) : (
+                    <>
+                      <option value="Khankah" />
+                      <option value="Bindwal" />
+                      <option value="Dewabindwal" />
+                      <option value="Jairajpur" />
+                      <option value="Jagmalpur" />
+                      <option value="Hari Pur" />
+                      <option value="Naseer Pur" />
+                      <option value="Gulwa Gauri" />
+                      <option value="Alauddin Patti" />
+                    </>
+                  )}
                 </datalist>
               </div>
 

@@ -18,6 +18,7 @@ export default function MenuSection({ activeOffer, villagesList = [] }) {
     "pizza-veg-cheese-corn": "small",
     "pizza-paneer-tikka": "small",
     "pizza-chicken-tikka": "small",
+    "pizza-chicken-peri-peri": "small",
   });
 
   const handleSizeChange = (id, size) => {

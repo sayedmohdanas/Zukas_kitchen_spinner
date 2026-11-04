@@ -96,6 +96,17 @@ export const pizzaMenuItems = [
       medium: 209,
     },
   },
+  {
+    id: "pizza-chicken-peri-peri",
+    name: "Pizza Chicken Peri Peri",
+    description: "Spicy Peri Peri chicken chunks, cheese, capsicum & herbs",
+    isVeg: false,
+    image: chickenTikkaImg,
+    prices: {
+      small: 199,
+      medium: 249,
+    },
+  },
 ];
 
 export const extraAddons = [

@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 
 // Production Vercel URL
-const PRODUCTION_URL = "https://zukas-kitchen-spinner.vercel.app/api/spin";
+const PRODUCTION_URL = "https://zukas-kitchen.vercel.app/api/spin";
 
 async function testProductionEndpoint() {
   console.log("🌐 TESTING LIVE PRODUCTION VERCEL ENDPOINT:", PRODUCTION_URL);

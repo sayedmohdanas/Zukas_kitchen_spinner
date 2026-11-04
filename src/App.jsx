@@ -111,12 +111,20 @@ export default function App() {
     setIsSpinning(false);
     setHasSpun(true);
     setShowResult(true);
+    if (selectedPrize?.isWinningPrize) {
+      setActiveOffer({
+        prizeName: selectedPrize.label,
+        couponCode: couponCode,
+      });
+    }
     trackEvent("spin_completed", { prize: selectedPrize?.label, name: userName });
   };
 
   const handleClaimSuccess = ({ mobile, couponCode: updatedCode, prizeName }) => {
     setIsClaimed(true);
-    setClaimedMobile(mobile);
+    if (mobile) {
+      setClaimedMobile(mobile);
+    }
     if (updatedCode) {
       setCouponCode(updatedCode);
     }
@@ -124,7 +132,7 @@ export default function App() {
       prizeName: prizeName || selectedPrize?.label,
       couponCode: updatedCode || couponCode,
     });
-    trackEvent("coupon_claimed", { mobile, prize: selectedPrize?.label });
+    trackEvent("coupon_claimed", { mobile: mobile || "unspecified", prize: selectedPrize?.label });
   };
 
   return (

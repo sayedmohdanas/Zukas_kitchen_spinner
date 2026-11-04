@@ -19,10 +19,12 @@ export default function ResultModal({
 }) {
   const [copied, setCopied] = useState(false);
   const [copiedExisting, setCopiedExisting] = useState(false);
-  const [mobileInput, setMobileInput] = useState("");
   const [claimError, setClaimError] = useState("");
   const [isClaiming, setIsClaiming] = useState(false);
   const [existingCoupon, setExistingCoupon] = useState(null);
+  const [localClaimed, setLocalClaimed] = useState(false);
+
+  const effectiveIsClaimed = isClaimed || localClaimed;
 
   useEffect(() => {
     // Fire confetti for winning prize only
@@ -98,60 +100,53 @@ export default function ResultModal({
     }
   };
 
-  const handleClaimSubmit = async (e) => {
-    e.preventDefault();
-    const digits = mobileInput.replace(/\D/g, "");
-    if (digits.length !== 10) {
-      setClaimError("Please enter a valid 10-digit mobile number.");
-      return;
-    }
-
+  const handleClaim = async () => {
     setClaimError("");
     setIsClaiming(true);
 
     try {
-      const res = await claimCouponService(spinId, digits);
+      const res = await claimCouponService(spinId);
       if (res && res.code === "EXISTING_COUPON" && res.existingCoupon) {
         setExistingCoupon(res.existingCoupon);
       } else if (res && res.success) {
+        setLocalClaimed(true);
         if (onClaimSuccess) {
           onClaimSuccess({
-            mobile: res.mobile,
             couponCode: res.couponCode || couponCode,
+            prizeName: res.prizeName || prize?.label,
           });
         }
       } else {
-        setClaimError(res.error || res.message || "Could not claim coupon.");
+        setClaimError(res?.error || res?.message || "Could not claim coupon.");
       }
     } catch (err) {
-      setClaimError(err.message || "Failed to claim coupon. Please try again.");
+      // Local fallback so user is never blocked
+      setLocalClaimed(true);
+      if (onClaimSuccess) {
+        onClaimSuccess({
+          couponCode: couponCode,
+          prizeName: prize?.label,
+        });
+      }
     } finally {
       setIsClaiming(false);
     }
   };
 
   const handleExploreMenu = () => {
+    if (!effectiveIsClaimed && onClaimSuccess) {
+      onClaimSuccess({
+        couponCode: couponCode,
+        prizeName: prize?.label,
+      });
+      claimCouponService(spinId).catch(() => {});
+    }
     trackEvent("explore_menu_clicked", { source: "result_modal" });
     onClose();
     setTimeout(() => {
       const menuEl = document.getElementById("menu");
       if (menuEl) menuEl.scrollIntoView({ behavior: "smooth" });
     }, 100);
-  };
-
-  const handleWhatsAppExistingOrder = () => {
-    if (!existingCoupon) return;
-    trackEvent("order_clicked", {
-      source: "result_modal_existing_coupon",
-      prize: existingCoupon.prizeName,
-      couponCode: existingCoupon.couponCode,
-    });
-    const link = getWhatsAppOrderLink(
-      existingCoupon.prizeName,
-      existingCoupon.couponCode,
-      existingCoupon.name || userName
-    );
-    window.open(link, "_blank");
   };
 
   const handleInstagramClick = () => {
@@ -336,54 +331,25 @@ export default function ResultModal({
                   </div>
                 )}
 
-                {/* STEP 4: Mobile Number Form After Win */}
-                {!isClaimed ? (
-                  <form onSubmit={handleClaimSubmit} className="claim-coupon-form">
-                    <label htmlFor="claim-mobile-input" className="claim-form-label">
-                      Enter mobile number to receive/use your coupon
-                    </label>
-
-                    <div className={`mobile-input-wrapper ${claimError ? "input-has-error" : ""}`}>
-                      <div className="country-code-badge">
-                        <span className="flag-icon">🇮🇳</span>
-                        <span className="country-code">+91</span>
-                      </div>
-
-                      <input
-                        id="claim-mobile-input"
-                        type="tel"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={10}
-                        value={mobileInput}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, "");
-                          if (digits.length <= 10) {
-                            setMobileInput(digits);
-                            if (claimError) setClaimError("");
-                          }
-                        }}
-                        disabled={isClaiming}
-                        placeholder="Enter 10-digit mobile number"
-                        className="mobile-text-input"
-                        autoComplete="tel-national"
-                      />
-                    </div>
+                {/* Claim Coupon Action / Success State */}
+                {!effectiveIsClaimed ? (
+                  <div className="claim-coupon-action-box">
+                    <button
+                      type="button"
+                      className="modal-claim-coupon-btn"
+                      onClick={handleClaim}
+                      disabled={isClaiming}
+                    >
+                      <Ticket size={18} />
+                      <span>{isClaiming ? "CLAIMING COUPON..." : "🎁 CLAIM COUPON"}</span>
+                    </button>
 
                     {claimError && (
                       <div className="form-error-message" role="alert">
                         <span>⚠️ {claimError}</span>
                       </div>
                     )}
-
-                    <button
-                      type="submit"
-                      className="modal-claim-coupon-btn"
-                      disabled={isClaiming}
-                    >
-                      {isClaiming ? "CLAIMING COUPON..." : "📱 CLAIM COUPON"}
-                    </button>
-                  </form>
+                  </div>
                 ) : (
                   <div className="coupon-claimed-success-box">
                     <div className="claimed-success-badge">
@@ -398,7 +364,7 @@ export default function ResultModal({
 
                 {/* CTAs */}
                 <div className="modal-cta-group">
-                  {isClaimed && (
+                  {effectiveIsClaimed && (
                     <button
                       type="button"
                       className="modal-primary-order-btn"

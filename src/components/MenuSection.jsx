@@ -11,6 +11,7 @@ export default function MenuSection({ activeOffer, villagesList = [] }) {
   const [orderModalData, setOrderModalData] = useState(null); // { pizza, initialSize }
 
   const [selectedSizeMap, setSelectedSizeMap] = useState({
+    "burger-zinger": "regular",
     "pizza-margherita": "small",
     "pizza-cheese-corn": "small",
     "pizza-veg-pizza": "small",
@@ -95,8 +96,9 @@ export default function MenuSection({ activeOffer, villagesList = [] }) {
         {activeTab === "cards" && (
           <div className="menu-cards-grid">
             {pizzaMenuItems.map((item) => {
-              const currentSize = selectedSizeMap[item.id] || "small";
-              const currentPrice = item.prices[currentSize];
+              const isBurger = item.category === "burger" || !item.prices?.medium || item.prices?.small === item.prices?.medium;
+              const currentSize = selectedSizeMap[item.id] || (isBurger ? "regular" : "small");
+              const currentPrice = item.price || item.prices?.[currentSize] || item.prices?.regular || item.prices?.small;
 
               return (
                 <div key={item.id} className="pizza-card">
@@ -117,33 +119,42 @@ export default function MenuSection({ activeOffer, villagesList = [] }) {
                   </div>
 
                   <div className="pizza-card-body">
-                    {/* Size Selection Segmented Control */}
-                    <div className="size-selector-label">Select Size:</div>
-                    <div className="size-picker-group">
-                      <button
-                        type="button"
-                        className={`size-picker-btn ${currentSize === "small" ? "active" : ""}`}
-                        onClick={() => {
-                          handleSizeChange(item.id, "small");
-                          handleOpenOrderModal(item, "small");
-                        }}
-                      >
-                        <span className="size-label">Small (6 inch)</span>
-                        <span className="size-price">₹{item.prices.small}</span>
-                      </button>
+                    {/* Size Selection or Single Item Price */}
+                    {isBurger ? (
+                      <div className="single-item-price-bar">
+                        <span className="single-price-label">Price:</span>
+                        <span className="single-price-val">₹{currentPrice}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="size-selector-label">Select Size:</div>
+                        <div className="size-picker-group">
+                          <button
+                            type="button"
+                            className={`size-picker-btn ${currentSize === "small" ? "active" : ""}`}
+                            onClick={() => {
+                              handleSizeChange(item.id, "small");
+                              handleOpenOrderModal(item, "small");
+                            }}
+                          >
+                            <span className="size-label">Small (6 inch)</span>
+                            <span className="size-price">₹{item.prices.small}</span>
+                          </button>
 
-                      <button
-                        type="button"
-                        className={`size-picker-btn ${currentSize === "medium" ? "active" : ""}`}
-                        onClick={() => {
-                          handleSizeChange(item.id, "medium");
-                          handleOpenOrderModal(item, "medium");
-                        }}
-                      >
-                        <span className="size-label">Medium (8 inch)</span>
-                        <span className="size-price">₹{item.prices.medium}</span>
-                      </button>
-                    </div>
+                          <button
+                            type="button"
+                            className={`size-picker-btn ${currentSize === "medium" ? "active" : ""}`}
+                            onClick={() => {
+                              handleSizeChange(item.id, "medium");
+                              handleOpenOrderModal(item, "medium");
+                            }}
+                          >
+                            <span className="size-label">Medium (8 inch)</span>
+                            <span className="size-price">₹{item.prices.medium}</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
 
                     {/* Order Action Button - Opens Order Modal */}
                     <button
@@ -152,7 +163,7 @@ export default function MenuSection({ activeOffer, villagesList = [] }) {
                       onClick={() => handleOpenOrderModal(item, currentSize)}
                     >
                       <MessageSquare size={16} />
-                      <span>Order {currentSize === "small" ? "Small (6 inch)" : "Medium (8 inch)"} • ₹{currentPrice}</span>
+                      <span>Order {isBurger ? item.name : (currentSize === "small" ? "Small (6 inch)" : "Medium (8 inch)")} • ₹{currentPrice}</span>
                     </button>
                   </div>
                 </div>

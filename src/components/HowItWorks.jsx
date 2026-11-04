@@ -1,13 +1,13 @@
 import React from "react";
-import { Smartphone, RotateCw, Ticket, Utensils } from "lucide-react";
+import { User, RotateCw, Ticket, Utensils } from "lucide-react";
 
 export default function HowItWorks() {
   const steps = [
     {
       stepNumber: "01",
-      icon: Smartphone,
-      title: "Enter Your Mobile Number",
-      description: "Just a quick step to get started and unlock your promotional spin eligibility.",
+      icon: User,
+      title: "Enter Your Name",
+      description: "A quick step to get started and unlock your promotional spin.",
     },
     {
       stepNumber: "02",

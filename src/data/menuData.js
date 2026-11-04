@@ -5,16 +5,31 @@ import vegPizzaImg from "../assets/pizzas/veg_pizza.jpg";
 import vegCheeseCornImg from "../assets/pizzas/veg_cheese_corn.jpg";
 import paneerTikkaImg from "../assets/pizzas/paneer_tikka.jpg";
 import chickenTikkaImg from "../assets/pizzas/chicken_tikka.jpg";
+import zingerBurgerImg from "../assets/zinger_burger.jpg";
 
 export const menuHeader = {
   title: "From Our Kitchen to You",
-  openingTime: "Mon-Fri: 2 PM - 9 PM | Sat-Sun: 9 AM - 9 PM",
-  tagline: "HOT & FRESH PIZZA DELIVERED TO YOUR DOORSTEP",
+  openingTime: "Mon-Fri: 2 PM - 10:30 PM | Sat-Sun: 9 AM - 10:30 PM",
+  tagline: "HOT & FRESH FOOD DELIVERED TO YOUR DOORSTEP",
   phone: "9194130132",
   posterImage: zukasMenuPoster,
 };
 
 export const pizzaMenuItems = [
+  {
+    id: "burger-zinger",
+    name: "Chicken Zinger Burger",
+    description: "Crispy fried patty, fresh crunchy lettuce & creamy mayo",
+    isVeg: false,
+    category: "burger",
+    image: zingerBurgerImg,
+    price: 60,
+    prices: {
+      regular: 60,
+      small: 60,
+      medium: 60,
+    },
+  },
   {
     id: "pizza-margherita",
     name: "Pizza Margherita",

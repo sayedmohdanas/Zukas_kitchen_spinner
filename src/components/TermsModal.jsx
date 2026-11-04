@@ -6,7 +6,7 @@ export default function TermsModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const rules = [
-    "One promotional spin is allowed per eligible mobile number per campaign period.",
+    "One promotional spin is allowed per customer per campaign period.",
     "Coupon codes generated during this promotional event are single-use only.",
     "Offers and discounts cannot be combined with other existing restaurant promotions or coupons.",
     "Coupon validity, expiration, and minimum order requirements are subject to campaign guidelines.",
@@ -42,7 +42,7 @@ export default function TermsModal({ isOpen, onClose }) {
 
         <div className="terms-body">
           <p className="terms-intro">
-            Welcome to the <strong>{config.brandName}</strong> {config.campaignName} campaign. By entering your mobile number and participating in this promotion, you agree to the following rules:
+            Welcome to the <strong>{config.brandName}</strong> {config.campaignName} campaign. By participating in this promotion, you agree to the following rules:
           </p>
 
           <ul className="terms-list">

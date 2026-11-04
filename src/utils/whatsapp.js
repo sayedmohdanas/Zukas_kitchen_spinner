@@ -50,50 +50,41 @@ export const getWhatsAppOrderLink = (prize = null, couponCode = null, userName =
 };
 
 /**
- * Generates a WhatsApp order link for a detailed pizza order with size, price, extra cheese, delivery details, and total.
+ * Generates a WhatsApp order link for single or multi-item orders (pizzas & burgers)
+ * with sizes, quantities, extra cheese, delivery details, coupon offers, and total bill.
  */
 export const getWhatsAppPizzaOrderLink = ({
+  items = null,
   pizzaName,
   size,
   basePrice,
   hasExtraCheese,
   extraCheesePrice = 25,
+  quantity = 1,
   totalPrice,
   customerName = "",
+  contactNumber = "",
   deliveryAddress = "",
   landmark = "",
   locationUrl = "",
   activeOffer = null,
 }) => {
   const number = config.whatsappNumber;
-  const sizeLabel = size === "small" ? "Small" : "Medium";
-  const extraCheeseText = hasExtraCheese ? `Yes (+₹${extraCheesePrice})` : "No";
-
-  let greeting = "Hi Zukas Kitchen! 🍕";
   const nameTrimmed = String(customerName || "").trim();
-  if (nameTrimmed) {
-    greeting = `Hi Zukas Kitchen! I'm ${nameTrimmed} 🍕`;
-  }
 
   let deliverySection = "";
   const addressTrimmed = String(deliveryAddress || "").trim();
+  const contactTrimmed = String(contactNumber || "").trim();
   const landmarkTrimmed = String(landmark || "").trim();
   const urlTrimmed = String(locationUrl || "").trim();
 
-  if (nameTrimmed || addressTrimmed || landmarkTrimmed || urlTrimmed) {
+  if (nameTrimmed || contactTrimmed || addressTrimmed || landmarkTrimmed || urlTrimmed) {
     deliverySection = "\n\n📍 Delivery Details:";
-    if (nameTrimmed) {
-      deliverySection += `\nName: ${nameTrimmed}`;
-    }
-    if (addressTrimmed) {
-      deliverySection += `\nAddress: ${addressTrimmed}`;
-    }
-    if (landmarkTrimmed) {
-      deliverySection += `\nLandmark: ${landmarkTrimmed}`;
-    }
-    if (urlTrimmed) {
-      deliverySection += `\nCurrent Location:\n${urlTrimmed}`;
-    }
+    if (nameTrimmed) deliverySection += `\nName: ${nameTrimmed}`;
+    if (contactTrimmed) deliverySection += `\nContact: ${contactTrimmed}`;
+    if (addressTrimmed) deliverySection += `\nAddress: ${addressTrimmed}`;
+    if (landmarkTrimmed) deliverySection += `\nLandmark: ${landmarkTrimmed}`;
+    if (urlTrimmed) deliverySection += `\nCurrent Location:\n${urlTrimmed}`;
   }
 
   let offerText = "";
@@ -101,7 +92,61 @@ export const getWhatsAppPizzaOrderLink = ({
     offerText = `\n\n🎉 Active Offer: ${activeOffer.prizeName}\n🎟️ Coupon Code: ${activeOffer.couponCode}`;
   }
 
-  const messageText = `${greeting}\n\nI'd like to order:\n\nPizza: ${pizzaName}\nSize: ${sizeLabel}\nPizza Price: ₹${basePrice}\nExtra Cheese: ${extraCheeseText}\n\nTotal: ₹${totalPrice}${deliverySection}${offerText}\n\nPlease confirm my order. Thank you!`;
+  // Multi-item formatting
+  if (Array.isArray(items) && items.length > 0) {
+    let hasBurger = false;
+    let hasPizza = false;
+
+    const formattedItems = items
+      .map((it, idx) => {
+        const isB = String(it.name || "").toLowerCase().includes("burger") || it.category === "burger";
+        if (isB) hasBurger = true;
+        else hasPizza = true;
+
+        const sLabel = isB ? "Regular" : (it.size === "small" ? "Small (6 inch)" : (it.size === "medium" ? "Medium (8 inch)" : it.size));
+        const safeItemQty = Math.max(1, Number(it.quantity) || 1);
+        const cheeseText = it.hasExtraCheese ? `\n   🧀 Extra Cheese: Yes (+₹${extraCheesePrice * safeItemQty})` : "";
+        const unitText = safeItemQty > 1 ? `₹${it.basePrice} each` : `₹${it.basePrice}`;
+
+        if (isB) {
+          return `${idx + 1}. 🍔 *${it.name}*\n   Quantity: ${safeItemQty} • ${unitText}${cheeseText}`;
+        } else {
+          return `${idx + 1}. 🍕 *${it.name}*\n   Size: ${sLabel}\n   Quantity: ${safeItemQty} • ${unitText}${cheeseText}`;
+        }
+      })
+      .join("\n\n");
+
+    const emoji = hasBurger && hasPizza ? "🍕🍔" : (hasBurger ? "🍔" : "🍕");
+    const greeting = nameTrimmed
+      ? `Hi Zukas Kitchen! I'm ${nameTrimmed} ${emoji}`
+      : `Hi Zukas Kitchen! ${emoji}`;
+
+    const messageText = `${greeting}\n\nI'd like to order:\n\n${formattedItems}\n\n💰 *Total Bill:* ₹${totalPrice}${deliverySection}${offerText}\n\nPlease confirm my order. Thank you!`;
+
+    return `https://wa.me/${number}?text=${encodeURIComponent(messageText)}`;
+  }
+
+  // Single-item fallback
+  const isBurger = String(pizzaName).toLowerCase().includes("burger");
+  const sizeLabel = isBurger ? "Regular" : (size === "small" ? "Small" : (size === "medium" ? "Medium" : size));
+  const safeQty = Math.max(1, Number(quantity) || 1);
+  const extraCheeseText = hasExtraCheese
+    ? (safeQty > 1 ? `Yes (+₹${extraCheesePrice * safeQty})` : `Yes (+₹${extraCheesePrice})`)
+    : "No";
+
+  let greeting = isBurger ? "Hi Zukas Kitchen! 🍔" : "Hi Zukas Kitchen! 🍕";
+  if (nameTrimmed) {
+    greeting = `Hi Zukas Kitchen! I'm ${nameTrimmed} ${isBurger ? "🍔" : "🍕"}`;
+  }
+
+  const qtyLine = safeQty > 1 ? `\nQuantity: ${safeQty}` : "";
+  const priceLine = safeQty > 1 ? `₹${basePrice} each` : `₹${basePrice}`;
+
+  const itemDetails = isBurger
+    ? `Item: ${pizzaName}${qtyLine}\nPrice: ${priceLine}`
+    : `Pizza: ${pizzaName}\nSize: ${sizeLabel}${qtyLine}\nPizza Price: ${priceLine}`;
+
+  const messageText = `${greeting}\n\nI'd like to order:\n\n${itemDetails}\nExtra Cheese: ${extraCheeseText}\n\nTotal: ₹${totalPrice}${deliverySection}${offerText}\n\nPlease confirm my order. Thank you!`;
 
   return `https://wa.me/${number}?text=${encodeURIComponent(messageText)}`;
 };

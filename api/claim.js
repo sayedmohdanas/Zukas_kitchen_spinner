@@ -115,10 +115,21 @@ export default async function handler(req, res) {
       });
     }
 
-    const normalizedMobile = normalizeMobile(mobile);
+    let normalizedMobile = null;
+    if (mobile && String(mobile).trim().length > 0) {
+      try {
+        normalizedMobile = normalizeMobile(mobile);
+      } catch (err) {
+        return res.status(400).json({
+          success: false,
+          error: err.message,
+        });
+      }
+    }
+
     const db = getAdminDb();
 
-    // Execute atomic transaction for coupon claim & mobile cooldown verification
+    // Execute atomic transaction for coupon claim
     const result = await db.runTransaction(async (transaction) => {
       // 1. Read campaign config
       const campaignRef = db.collection("campaigns").doc("spin_and_win");
@@ -143,10 +154,11 @@ export default async function handler(req, res) {
         throw new Error("Spin & Win is currently closed. Please check back soon! ❤️");
       }
 
-      // 2. Query prior claimed spins for this mobile number
+      // 2. Query prior claimed spins for this mobile number IF mobile was supplied
       const spinsRef = db.collection("spins");
-      const existingSpinsQuery = spinsRef.where("mobile", "==", normalizedMobile);
-      const existingSpinsSnap = await transaction.get(existingSpinsQuery);
+      if (normalizedMobile) {
+        const existingSpinsQuery = spinsRef.where("mobile", "==", normalizedMobile);
+        const existingSpinsSnap = await transaction.get(existingSpinsQuery);
 
       if (!existingSpinsSnap.empty) {
         let latestTimeMs = 0;
@@ -223,16 +235,20 @@ export default async function handler(req, res) {
       const spinData = spinSnap.data();
 
       // Check if spin already claimed by another mobile
-      if (spinData.mobile && spinData.mobile !== normalizedMobile) {
+      if (normalizedMobile && spinData.mobile && spinData.mobile !== normalizedMobile) {
         throw new Error("This coupon has already been claimed by a different mobile number.");
       }
 
-      // Update spin document with mobile number and claim timestamp
-      transaction.update(spinDocRef, {
-        mobile: normalizedMobile,
+      // Update spin document with claim status and timestamp
+      const updatePayload = {
         status: "claimed",
         claimedAt: FieldValue.serverTimestamp(),
-      });
+      };
+      if (normalizedMobile) {
+        updatePayload.mobile = normalizedMobile;
+      }
+
+      transaction.update(spinDocRef, updatePayload);
 
       return {
         success: true,

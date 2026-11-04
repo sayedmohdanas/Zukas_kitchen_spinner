@@ -1,15 +1,37 @@
 import React, { useState, useEffect } from "react";
-import { X, MessageSquare, Check, MapPin, Navigation, ExternalLink, AlertCircle, Trash2 } from "lucide-react";
+import {
+  X,
+  MessageSquare,
+  Check,
+  AlertCircle,
+  Plus,
+  Minus,
+  Navigation,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  ShoppingBag,
+  Sparkles,
+} from "lucide-react";
 import { getWhatsAppPizzaOrderLink } from "../utils/whatsapp";
 import { trackEvent } from "../utils/analytics";
 import LocationPickerMap from "./LocationPickerMap";
+import { pizzaMenuItems } from "../data/menuData";
 
-export default function PizzaOrderModal({ pizza, initialSize = "small", activeOffer, villagesList = [], onClose }) {
-  const [selectedSize, setSelectedSize] = useState(initialSize);
-  const [hasExtraCheese, setHasExtraCheese] = useState(false);
+export default function PizzaOrderModal({
+  pizza,
+  initialSize = "small",
+  activeOffer,
+  villagesList = [],
+  onClose,
+}) {
+  // Array of items in the current order
+  const [orderItems, setOrderItems] = useState([]);
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
 
   // Delivery details state (optional)
   const [customerName, setCustomerName] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [landmark, setLandmark] = useState("");
   const [isLocating, setIsLocating] = useState(false);
@@ -18,10 +40,43 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", activeOf
   const [locationError, setLocationError] = useState("");
   const [locationSuccess, setLocationSuccess] = useState(false);
 
-  // Sync size when modal opens or initialSize changes
+  const extraCheesePrice = 25;
+
+  // Sync initial pizza when modal opens
   useEffect(() => {
-    setSelectedSize(initialSize);
-  }, [initialSize]);
+    if (pizza) {
+      const isBurger =
+        pizza.category === "burger" ||
+        !pizza.prices?.medium ||
+        pizza.prices?.small === pizza.prices?.medium;
+      const finalSize = isBurger ? "regular" : initialSize;
+      const basePrice =
+        pizza.price ||
+        pizza.prices?.[finalSize] ||
+        pizza.prices?.regular ||
+        pizza.prices?.small ||
+        60;
+
+      setOrderItems([
+        {
+          id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          menuId: pizza.id,
+          name: pizza.name,
+          category: pizza.category || (isBurger ? "burger" : "pizza"),
+          isBurger,
+          image: pizza.image,
+          isVeg: pizza.isVeg,
+          description: pizza.description,
+          prices: pizza.prices,
+          size: finalSize,
+          basePrice,
+          hasExtraCheese: false,
+          quantity: 1,
+        },
+      ]);
+      setIsAddMenuOpen(false);
+    }
+  }, [pizza, initialSize]);
 
   // Lock body scroll while modal is open
   useEffect(() => {
@@ -38,10 +93,105 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", activeOf
 
   if (!pizza) return null;
 
-  const basePrice = pizza.prices[selectedSize];
-  const extraCheesePrice = 25;
-  const totalPrice = basePrice + (hasExtraCheese ? extraCheesePrice : 0);
-  const sizeLabel = selectedSize === "small" ? "Small (6 inch)" : "Medium (8 inch)";
+  // Order Calculations
+  const totalItemsCount = orderItems.reduce((acc, it) => acc + (it.quantity || 1), 0);
+  const grandTotalPrice = orderItems.reduce((acc, it) => {
+    const itemUnit = it.basePrice + (it.hasExtraCheese ? extraCheesePrice : 0);
+    return acc + itemUnit * (it.quantity || 1);
+  }, 0);
+
+  // Item Action Handlers
+  const handleItemQuantityChange = (itemId, delta) => {
+    setOrderItems((prev) =>
+      prev.map((it) => {
+        if (it.id === itemId) {
+          const newQty = Math.max(1, Math.min(20, (it.quantity || 1) + delta));
+          return { ...it, quantity: newQty };
+        }
+        return it;
+      })
+    );
+  };
+
+  const handleItemSizeChange = (itemId, newSize) => {
+    setOrderItems((prev) =>
+      prev.map((it) => {
+        if (it.id === itemId && !it.isBurger) {
+          const newBasePrice = it.prices?.[newSize] || it.basePrice;
+          return { ...it, size: newSize, basePrice: newBasePrice };
+        }
+        return it;
+      })
+    );
+  };
+
+  const handleItemExtraCheeseToggle = (itemId) => {
+    setOrderItems((prev) =>
+      prev.map((it) => {
+        if (it.id === itemId) {
+          return { ...it, hasExtraCheese: !it.hasExtraCheese };
+        }
+        return it;
+      })
+    );
+  };
+
+  const handleRemoveItem = (itemId) => {
+    if (orderItems.length <= 1) {
+      onClose();
+      return;
+    }
+    setOrderItems((prev) => prev.filter((it) => it.id !== itemId));
+  };
+
+  const handleAddItemFromMenu = (menuItem, chosenSize = "small") => {
+    const isBurger =
+      menuItem.category === "burger" ||
+      !menuItem.prices?.medium ||
+      menuItem.prices?.small === menuItem.prices?.medium;
+    const finalSize = isBurger ? "regular" : chosenSize;
+    const itemPrice =
+      menuItem.price ||
+      menuItem.prices?.[finalSize] ||
+      menuItem.prices?.regular ||
+      menuItem.prices?.small ||
+      60;
+
+    // If identical item with same size exists, increment quantity
+    const existingIndex = orderItems.findIndex(
+      (it) => it.menuId === menuItem.id && it.size === finalSize
+    );
+
+    if (existingIndex >= 0) {
+      setOrderItems((prev) =>
+        prev.map((it, idx) =>
+          idx === existingIndex
+            ? { ...it, quantity: Math.min(20, (it.quantity || 1) + 1) }
+            : it
+        )
+      );
+    } else {
+      setOrderItems((prev) => [
+        ...prev,
+        {
+          id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          menuId: menuItem.id,
+          name: menuItem.name,
+          category: menuItem.category || (isBurger ? "burger" : "pizza"),
+          isBurger,
+          image: menuItem.image,
+          isVeg: menuItem.isVeg,
+          description: menuItem.description,
+          prices: menuItem.prices,
+          size: finalSize,
+          basePrice: itemPrice,
+          hasExtraCheese: false,
+          quantity: 1,
+        },
+      ]);
+    }
+    trackEvent("item_added_to_order", { item: menuItem.name, size: finalSize });
+  };
 
   // Handle Dragging Marker on Interactive Map
   const handleLocationChange = (newCoords) => {
@@ -110,24 +260,20 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", activeOf
 
   const handleConfirmOrder = () => {
     trackEvent("order_clicked", {
-      source: "pizza_order_modal",
-      pizza: pizza.name,
-      size: sizeLabel,
-      extraCheese: hasExtraCheese,
-      totalPrice,
+      source: "pizza_order_modal_multi",
+      itemsCount: totalItemsCount,
+      totalPrice: grandTotalPrice,
       hasName: Boolean(customerName.trim()),
+      hasContact: Boolean(contactNumber.trim()),
       hasAddress: Boolean(deliveryAddress.trim()),
       hasLocation: Boolean(locationUrl.trim()),
     });
 
     const link = getWhatsAppPizzaOrderLink({
-      pizzaName: pizza.name,
-      size: selectedSize,
-      basePrice,
-      hasExtraCheese,
-      extraCheesePrice,
-      totalPrice,
+      items: orderItems,
+      totalPrice: grandTotalPrice,
       customerName,
+      contactNumber,
       deliveryAddress,
       landmark,
       locationUrl,
@@ -138,14 +284,26 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", activeOf
     onClose();
   };
 
+  const modalBadgeText =
+    orderItems.length > 1
+      ? `🛒 YOUR ORDER (${totalItemsCount} ${totalItemsCount === 1 ? "ITEM" : "ITEMS"})`
+      : orderItems[0]?.isBurger
+      ? "🍔 YOUR BURGER ORDER"
+      : "🍕 YOUR PIZZA ORDER";
+
+  const modalTitle =
+    orderItems.length > 1
+      ? `${totalItemsCount} Items Selected`
+      : orderItems[0]?.name || pizza.name;
+
   return (
     <div className="pizza-order-modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div className="pizza-order-modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="order-modal-header">
           <div className="modal-header-title-group">
-            <span className="modal-header-badge">🍕 YOUR PIZZA ORDER</span>
-            <h3>{pizza.name}</h3>
+            <span className="modal-header-badge">{modalBadgeText}</span>
+            <h3>{modalTitle}</h3>
           </div>
           <button type="button" className="close-order-modal-btn" onClick={onClose} aria-label="Close modal">
             <X size={22} />
@@ -154,82 +312,218 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", activeOf
 
         {/* Modal Body */}
         <div className="order-modal-body">
-          {/* Pizza Preview Thumbnail */}
-          {pizza.image && (
-            <div className="order-modal-img-container">
-              <div className="order-modal-img-box">
-                <img src={pizza.image} alt={pizza.name} className="order-modal-img" loading="lazy" decoding="async" />
-              </div>
-              <div className="order-modal-info-bar">
-                <span className={`veg-tag ${pizza.isVeg ? "veg" : "non-veg"}`}>
-                  <span className="dot" />
-                </span>
-                <span className="modal-pizza-desc">{pizza.description}</span>
-              </div>
+          {/* Active Offer Banner */}
+          {activeOffer && activeOffer.couponCode && (
+            <div className="modal-active-offer-banner">
+              <Sparkles size={16} className="sparkle-gold" />
+              <span>
+                Applied Offer: <strong>{activeOffer.prizeName}</strong> (Code: <code>{activeOffer.couponCode}</code>)
+              </span>
             </div>
           )}
 
-          {/* Section 1: Select Size */}
+          {/* Section 1: Order Items List */}
           <div className="order-option-group">
-            <label className="order-group-label">Select Size:</label>
-            <div className="modal-size-grid">
+            <div className="order-items-group-header">
+              <label className="order-group-label" style={{ marginBottom: 0 }}>
+                Selected Food Items ({orderItems.length}):
+              </label>
+              <span className="order-items-hint">Customize sizes, quantity & cheese below</span>
+            </div>
+
+            <div className="order-items-list">
+              {orderItems.map((item, idx) => {
+                const itemTotal = (item.basePrice + (item.hasExtraCheese ? extraCheesePrice : 0)) * (item.quantity || 1);
+
+                return (
+                  <div key={item.id} className="order-item-card">
+                    <div className="order-item-card-top">
+                      <div className="order-item-info">
+                        <span className={`veg-tag ${item.isVeg ? "veg" : "non-veg"}`}>
+                          <span className="dot" />
+                        </span>
+                        <div className="order-item-titles">
+                          <h4 className="order-item-name">{item.name}</h4>
+                          <span className="order-item-unit-price">
+                            Base: ₹{item.basePrice}
+                            {item.isBurger ? " (Regular)" : ` (${item.size === "small" ? "Small 6\"" : "Medium 8\""})`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {orderItems.length > 1 && (
+                        <button
+                          type="button"
+                          className="order-item-remove-btn"
+                          onClick={() => handleRemoveItem(item.id)}
+                          aria-label={`Remove ${item.name}`}
+                          title="Remove item"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Size Selector for Pizzas */}
+                    {!item.isBurger && item.prices && (
+                      <div className="order-item-size-row">
+                        <span className="size-row-label">Size:</span>
+                        <div className="item-size-pill-group">
+                          <button
+                            type="button"
+                            className={`item-size-pill ${item.size === "small" ? "active" : ""}`}
+                            onClick={() => handleItemSizeChange(item.id, "small")}
+                          >
+                            Small (6") • ₹{item.prices?.small}
+                          </button>
+                          <button
+                            type="button"
+                            className={`item-size-pill ${item.size === "medium" ? "active" : ""}`}
+                            onClick={() => handleItemSizeChange(item.id, "medium")}
+                          >
+                            Medium (8") • ₹{item.prices?.medium}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Extra Cheese Option */}
+                    <div
+                      className={`order-item-cheese-toggle ${item.hasExtraCheese ? "checked" : ""}`}
+                      onClick={() => handleItemExtraCheeseToggle(item.id)}
+                    >
+                      <input
+                        type="checkbox"
+                        id={`cheese-${item.id}`}
+                        checked={item.hasExtraCheese}
+                        onChange={() => handleItemExtraCheeseToggle(item.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <label htmlFor={`cheese-${item.id}`} className="cheese-toggle-label">
+                        <span>🧀 Add Extra Cheese</span>
+                        <span className="addon-tag">+₹{extraCheesePrice}</span>
+                      </label>
+                    </div>
+
+                    {/* Bottom Row: Quantity Stepper & Subtotal */}
+                    <div className="order-item-card-bottom">
+                      <div className="item-qty-stepper">
+                        <button
+                          type="button"
+                          className="qty-btn minus"
+                          onClick={() => handleItemQuantityChange(item.id, -1)}
+                          disabled={item.quantity <= 1}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="qty-value">{item.quantity}</span>
+                        <button
+                          type="button"
+                          className="qty-btn plus"
+                          onClick={() => handleItemQuantityChange(item.id, 1)}
+                          disabled={item.quantity >= 20}
+                          aria-label="Increase quantity"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+
+                      <div className="order-item-subtotal">
+                        <span className="subtotal-label">Subtotal:</span>
+                        <span className="subtotal-amount">₹{itemTotal}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* + Add Another Pizza or Burger Button */}
+            <div className="add-more-items-container">
               <button
                 type="button"
-                className={`modal-size-card ${selectedSize === "small" ? "selected" : ""}`}
-                onClick={() => setSelectedSize("small")}
+                className={`add-more-toggle-btn ${isAddMenuOpen ? "active" : ""}`}
+                onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
               >
-                <div className="size-card-info">
-                  <span className="size-card-name">Small (6 inch)</span>
-                  <span className="size-card-desc">Personal Size</span>
+                <div className="add-btn-left">
+                  <span className="plus-circle-badge">
+                    <Plus size={16} />
+                  </span>
+                  <div className="add-btn-text">
+                    <strong>+ Add More Items to Order</strong>
+                    <span>Explore menu & combine in this single order</span>
+                  </div>
                 </div>
-                <div className="size-price-group">
-                  <span className="size-card-price">₹{pizza.prices.small}</span>
-                  {selectedSize === "small" && <Check size={18} className="size-check-icon" />}
-                </div>
+                {isAddMenuOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
               </button>
 
-              <button
-                type="button"
-                className={`modal-size-card ${selectedSize === "medium" ? "selected" : ""}`}
-                onClick={() => setSelectedSize("medium")}
-              >
-                <div className="size-card-info">
-                  <span className="size-card-name">Medium (8 inch)</span>
-                  <span className="size-card-desc">Sharing Size</span>
+              {/* Expandable Quick Add Menu Tray */}
+              {isAddMenuOpen && (
+                <div className="quick-add-menu-tray">
+                  <div className="quick-add-tray-header">
+                    <span>Tap any item to add it to your order:</span>
+                  </div>
+
+                  <div className="quick-add-items-grid">
+                    {pizzaMenuItems.map((menuItem) => {
+                      const isItemBurger =
+                        menuItem.category === "burger" ||
+                        !menuItem.prices?.medium ||
+                        menuItem.prices?.small === menuItem.prices?.medium;
+                      const burgerPrice =
+                        menuItem.price || menuItem.prices?.regular || menuItem.prices?.small || 60;
+
+                      return (
+                        <div key={menuItem.id} className="quick-add-card">
+                          <div className="quick-add-card-header">
+                            <span className={`veg-tag ${menuItem.isVeg ? "veg" : "non-veg"}`}>
+                              <span className="dot" />
+                            </span>
+                            <span className="quick-add-name">{menuItem.name}</span>
+                          </div>
+
+                          <div className="quick-add-actions">
+                            {isItemBurger ? (
+                              <button
+                                type="button"
+                                className="quick-add-btn burger-add"
+                                onClick={() => handleAddItemFromMenu(menuItem, "regular")}
+                              >
+                                <Plus size={14} />
+                                <span>+ Add • ₹{burgerPrice}</span>
+                              </button>
+                            ) : (
+                              <div className="quick-add-size-btns">
+                                <button
+                                  type="button"
+                                  className="quick-add-btn pizza-add small"
+                                  onClick={() => handleAddItemFromMenu(menuItem, "small")}
+                                >
+                                  <Plus size={13} />
+                                  <span>Small • ₹{menuItem.prices?.small}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="quick-add-btn pizza-add medium"
+                                  onClick={() => handleAddItemFromMenu(menuItem, "medium")}
+                                >
+                                  <Plus size={13} />
+                                  <span>Medium • ₹{menuItem.prices?.medium}</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="size-price-group">
-                  <span className="size-card-price">₹{pizza.prices.medium}</span>
-                  {selectedSize === "medium" && <Check size={18} className="size-check-icon" />}
-                </div>
-              </button>
+              )}
             </div>
           </div>
 
-          {/* Section 2: Customize Your Pizza (Extra Cheese) */}
-          <div className="order-option-group">
-            <label className="order-group-label">🧀 Customize Your Pizza</label>
-            <div
-              className={`extra-cheese-toggle-card ${hasExtraCheese ? "checked" : ""}`}
-              onClick={() => setHasExtraCheese(!hasExtraCheese)}
-            >
-              <div className="checkbox-row">
-                <input
-                  type="checkbox"
-                  id="extra-cheese-check"
-                  checked={hasExtraCheese}
-                  onChange={(e) => setHasExtraCheese(e.target.checked)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <label htmlFor="extra-cheese-check" className="custom-checkbox-label">
-                  <strong>Add Extra Cheese</strong>
-                  <span className="addon-price-tag">+₹{extraCheesePrice}</span>
-                </label>
-              </div>
-              <p className="extra-cheese-help">Loaded with extra gooey mozzarella cheese topping</p>
-            </div>
-          </div>
-
-          {/* Section 3: Delivery Location & Address (Optional) */}
+          {/* Section 2: Delivery Location & Address (Optional) */}
           <div className="order-option-group">
             <label className="order-group-label">📍 Delivery Details (Optional)</label>
 
@@ -249,37 +543,42 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", activeOf
                 />
               </div>
 
-              {/* Village/Area Dropdown */}
+              {/* Contact Number Input (Optional) */}
+              <div className="input-field-group">
+                <label htmlFor="contact-number-input" className="input-sublabel">
+                  Contact Number (optional):
+                </label>
+                <input
+                  type="tel"
+                  id="contact-number-input"
+                  className="modal-text-input"
+                  placeholder="e.g. 9876543210..."
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
+                />
+              </div>
+
+              {/* Delivery Address / Village / Locality Input (Optional) */}
               <div className="input-field-group">
                 <label htmlFor="delivery-address-input" className="input-sublabel">
-                  Delivery Village / Area:
+                  Delivery Address / Village (optional):
                 </label>
                 <input
                   type="text"
                   id="delivery-address-input"
-                  list="villages-list"
+                  list="villages-datalist"
                   className="modal-text-input"
-                  placeholder="Select or type your village/area..."
+                  placeholder="e.g. Village name, house number, area..."
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                 />
-                <datalist id="villages-list">
-                  {villagesList.length > 0 ? villagesList.map(v => (
-                    <option key={v.id} value={v.name} />
-                  )) : (
-                    <>
-                      <option value="Khankah" />
-                      <option value="Bindwal" />
-                      <option value="Dewabindwal" />
-                      <option value="Jairajpur" />
-                      <option value="Jagmalpur" />
-                      <option value="Hari Pur" />
-                      <option value="Naseer Pur" />
-                      <option value="Gulwa Gauri" />
-                      <option value="Alauddin Patti" />
-                    </>
-                  )}
-                </datalist>
+                {villagesList && villagesList.length > 0 && (
+                  <datalist id="villages-datalist">
+                    {villagesList.map((village, idx) => (
+                      <option key={idx} value={village} />
+                    ))}
+                  </datalist>
+                )}
               </div>
 
               {/* Landmark Input */}
@@ -346,38 +645,37 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", activeOf
             </div>
           </div>
 
-          {/* Section 4: Order Summary Breakdown */}
+          {/* Section 3: Order Summary Breakdown */}
           <div className="order-summary-card">
-            <h4 className="summary-title">Order Summary</h4>
-            <div className="summary-row">
-              <span>Pizza:</span>
-              <strong>{pizza.name}</strong>
+            <h4 className="summary-title">Order Bill Summary ({totalItemsCount} items)</h4>
+
+            <div className="summary-items-list">
+              {orderItems.map((item, idx) => {
+                const itemTotal = (item.basePrice + (item.hasExtraCheese ? extraCheesePrice : 0)) * (item.quantity || 1);
+                return (
+                  <div key={item.id} className="summary-row item-breakdown">
+                    <span className="summary-item-name">
+                      {idx + 1}. {item.name} {item.isBurger ? "(Regular)" : `(${item.size === "small" ? "Small" : "Medium"})`} × {item.quantity}
+                      {item.hasExtraCheese && <small className="extra-cheese-subtext"> + Cheese</small>}
+                    </span>
+                    <span className="summary-item-price">₹{itemTotal}</span>
+                  </div>
+                );
+              })}
             </div>
-            <div className="summary-row">
-              <span>Size:</span>
-              <strong>{sizeLabel}</strong>
-            </div>
-            <div className="summary-row">
-              <span>Pizza Price:</span>
-              <span>₹{basePrice}</span>
-            </div>
-            {hasExtraCheese ? (
-              <div className="summary-row highlight-addon">
-                <span>Extra Cheese:</span>
-                <span className="green-text">+₹{extraCheesePrice}</span>
-              </div>
-            ) : (
-              <div className="summary-row muted">
-                <span>Extra Cheese:</span>
-                <span>No</span>
-              </div>
-            )}
 
             {/* Delivery Details Summary Rows */}
             {customerName.trim() && (
               <div className="summary-row">
                 <span>Name:</span>
                 <span>{customerName.trim()}</span>
+              </div>
+            )}
+
+            {contactNumber.trim() && (
+              <div className="summary-row">
+                <span>Contact:</span>
+                <span>{contactNumber.trim()}</span>
               </div>
             )}
 
@@ -404,8 +702,8 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", activeOf
 
             <div className="summary-divider" />
             <div className="summary-row total-row">
-              <span>TOTAL:</span>
-              <span className="total-amount">₹{totalPrice}</span>
+              <span>GRAND TOTAL:</span>
+              <span className="total-amount">₹{grandTotalPrice}</span>
             </div>
           </div>
         </div>
@@ -414,7 +712,7 @@ export default function PizzaOrderModal({ pizza, initialSize = "small", activeOf
         <div className="order-modal-footer">
           <button type="button" className="confirm-whatsapp-order-btn" onClick={handleConfirmOrder}>
             <MessageSquare size={20} />
-            <span>CONFIRM & ORDER ON WHATSAPP • ₹{totalPrice}</span>
+            <span>CONFIRM & ORDER {totalItemsCount} {totalItemsCount === 1 ? "ITEM" : "ITEMS"} ON WHATSAPP • ₹{grandTotalPrice}</span>
           </button>
         </div>
       </div>

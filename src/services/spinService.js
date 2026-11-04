@@ -286,18 +286,19 @@ export const spinWheelService = async (
  * @param {string} mobileNumber 
  * @returns {Promise<{success: boolean, spinId: string, mobile: string, couponCode: string, prizeName: string, message: string}>}
  */
-export const claimCouponService = async (spinId, mobileNumber) => {
-  const normalizedMobile = normalizeMobileNumber(mobileNumber);
+export const claimCouponService = async (spinId, mobileNumber = null) => {
+  const normalizedMobile = mobileNumber ? normalizeMobileNumber(mobileNumber) : null;
 
   let response = null;
   try {
+    const payload = { spinId };
+    if (normalizedMobile) {
+      payload.mobile = normalizedMobile;
+    }
     response = await fetch("/api/claim", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        spinId,
-        mobile: normalizedMobile,
-      }),
+      body: JSON.stringify(payload),
     });
   } catch (e) {
     console.warn("Claim API fetch error:", e);
@@ -332,19 +333,21 @@ export const claimCouponService = async (spinId, mobileNumber) => {
 
   if (response && response.ok && data && data.success) {
     // Cache successful claim in localStorage for UX convenience
-    try {
-      localStorage.setItem(
-        `zukas_spin_${normalizedMobile}`,
-        JSON.stringify({
-          mobile: normalizedMobile,
-          spinId: data.spinId,
-          prizeName: data.prizeName,
-          couponCode: data.couponCode,
-          createdAt: new Date().toISOString(),
-        })
-      );
-    } catch (e) {
-      // Ignore storage error
+    if (normalizedMobile) {
+      try {
+        localStorage.setItem(
+          `zukas_spin_${normalizedMobile}`,
+          JSON.stringify({
+            mobile: normalizedMobile,
+            spinId: data.spinId,
+            prizeName: data.prizeName,
+            couponCode: data.couponCode,
+            createdAt: new Date().toISOString(),
+          })
+        );
+      } catch (e) {
+        // Ignore storage error
+      }
     }
 
     return data;

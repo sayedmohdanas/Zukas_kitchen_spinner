@@ -93,8 +93,8 @@ export default function PromoBanner() {
                   </div>
                 </div>
                 <div className="pizza-card-caption">
-                  <span className="caption-title">Zukas Special Artisan Pizza</span>
-                  <span className="caption-desc">Loaded with cheese, herbs & fresh veggies</span>
+                  <span className="caption-title">Zukas Special Chicken Peri Peri Pizza</span>
+                  <span className="caption-desc">Loaded with Spicy Chicken, cheese, herbs & fresh veggies</span>
                 </div>
               </div>
             </div>

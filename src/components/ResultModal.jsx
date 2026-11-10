@@ -113,7 +113,11 @@ export default function ResultModal({
         if (onClaimSuccess) {
           const cleanName = String(res.prizeName || prize?.label || "₹10 OFF")
             .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
-            .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
+            .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+            .replace(/%\s*OFF/gi, " OFF")
+            .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+            .replace(/On Any Order/gi, "On Any Pizza")
+            .replace(/On Pizza Orders/gi, "On Any Pizza");
           onClaimSuccess({
             couponCode: res.couponCode || couponCode,
             prizeName: cleanName,
@@ -128,7 +132,11 @@ export default function ResultModal({
       if (onClaimSuccess) {
         const cleanName = String(prize?.label || "₹10 OFF")
           .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
-          .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
+          .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+          .replace(/%\s*OFF/gi, " OFF")
+          .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+          .replace(/On Any Order/gi, "On Any Pizza")
+          .replace(/On Pizza Orders/gi, "On Any Pizza");
         onClaimSuccess({
           couponCode: couponCode,
           prizeName: cleanName,
@@ -143,7 +151,11 @@ export default function ResultModal({
     if (!effectiveIsClaimed && onClaimSuccess) {
       const cleanName = String(prize?.label || "₹10 OFF")
         .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
-        .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
+        .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+        .replace(/%\s*OFF/gi, " OFF")
+        .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+        .replace(/On Any Order/gi, "On Any Pizza")
+        .replace(/On Pizza Orders/gi, "On Any Pizza");
       onClaimSuccess({
         couponCode: couponCode,
         prizeName: cleanName,
@@ -308,8 +320,24 @@ export default function ResultModal({
                     <Gift size={28} color={prize.textColor} />
                   </div>
                   <div className="prize-box-details">
-                    <span className="prize-box-label">{prize.label}</span>
-                    <span className="prize-box-sub">{prize.subLabel}</span>
+                    <span className="prize-box-label">
+                      {String(prize.label || "")
+                        .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+                        .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+                        .replace(/%\s*OFF/gi, " OFF")
+                        .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+                        .replace(/On Any Order/gi, "On Any Pizza")
+                        .replace(/On Pizza Orders/gi, "On Any Pizza")}
+                    </span>
+                    <span className="prize-box-sub">
+                      {String(prize.subLabel || "")
+                        .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+                        .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+                        .replace(/%\s*OFF/gi, " OFF")
+                        .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+                        .replace(/On Any Order/gi, "On Any Pizza")
+                        .replace(/On Pizza Orders/gi, "On Any Pizza")}
+                    </span>
                   </div>
                 </div>
 

@@ -130,7 +130,11 @@ export default function App() {
     }
     const cleanPrizeName = String(prizeName || selectedPrize?.label || "₹10 OFF")
       .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
-      .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
+      .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+      .replace(/%\s*OFF/gi, " OFF")
+      .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+      .replace(/On Any Order/gi, "On Any Pizza")
+      .replace(/On Pizza Orders/gi, "On Any Pizza");
     setActiveOffer({
       prizeName: cleanPrizeName,
       couponCode: updatedCode || couponCode,
@@ -208,7 +212,11 @@ export default function App() {
           onExistingCouponRecovered={(coupon) => {
             const cleanPrize = String(coupon.prizeName || "₹10 OFF")
               .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
-              .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
+              .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+              .replace(/%\s*OFF/gi, " OFF")
+              .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+              .replace(/On Any Order/gi, "On Any Pizza")
+              .replace(/On Pizza Orders/gi, "On Any Pizza");
             setActiveOffer({ prizeName: cleanPrize, couponCode: coupon.couponCode });
           }}
           onClose={() => setShowResult(false)}

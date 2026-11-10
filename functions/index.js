@@ -7,7 +7,7 @@ const db = admin.firestore();
 // Server-side approved prize definitions and probability weights
 const SERVER_PRIZES = [
   { id: "25-off-2-medium-pizza", label: "₹25 OFF ON ORDER 2 MEDIUM PIZZA", wheelLabel: "₹25 OFF", subLabel: "ON ORDER 2 MEDIUM PIZZA", type: "discount", value: 25, weight: 10, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS25", bgColor: "#198C09", textColor: "#FFFFFF", badge: "2 PIZZA DEAL", accentColor: "#FFD700" },
-  { id: "10-off", label: "₹10 OFF ON ANY PIZZA", wheelLabel: "₹10 OFF", subLabel: "On Pizza Orders", type: "discount", value: 10, weight: 55, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS10", bgColor: "#FF9F1C", textColor: "#1E293B", badge: "SAVINGS", accentColor: "#FFFFFF" },
+  { id: "10-off", label: "₹10 OFF ON ANY PIZZA", wheelLabel: "₹10 OFF", subLabel: "On Any Pizza", type: "discount", value: 10, weight: 55, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS10", bgColor: "#FF9F1C", textColor: "#1E293B", badge: "SAVINGS", accentColor: "#FFFFFF" },
   { id: "20-off", label: "₹20 OFF", wheelLabel: "₹20 OFF", subLabel: "Instant Savings", type: "discount", value: 20, weight: 12, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS20", bgColor: "#FFB703", textColor: "#1E293B", badge: "BONUS", accentColor: "#198C09" },
   { id: "better-luck", label: "BETTER LUCK NEXT TIME", wheelLabel: "BETTER LUCK", subLabel: "NEXT TIME", type: "no_win", value: null, weight: 10, enabled: true, isWinningPrize: false, couponPrefix: null, bgColor: "#334155", textColor: "#F8FAFC", badge: "TRY AGAIN", accentColor: "#94A3B8" },
   { id: "15-off", label: "₹15 OFF", wheelLabel: "₹15 OFF", subLabel: "Super Saver", type: "discount", value: 15, weight: 8, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS15", bgColor: "#2A9D8F", textColor: "#FFFFFF", badge: "BIG DEAL", accentColor: "#FFD700" },
@@ -131,11 +131,24 @@ exports.spinWheel = onCall({ cors: true }, async (request) => {
           };
           const effectivePrizeId = oldToNewIds[docSnap.id] || docSnap.id;
           const matchedServer = SERVER_PRIZES.find((p) => p.id === effectivePrizeId) || {};
+          let label = matchedServer.label || pData.name || pData.label || "Discount";
+          if (effectivePrizeId === "10-off" || (label && label.toLowerCase().includes("10 off"))) {
+            label = "₹10 OFF ON ANY PIZZA";
+          }
+          let wheelLabel = matchedServer.wheelLabel || pData.wheelLabel || pData.name || pData.label;
+          if (effectivePrizeId === "10-off") {
+            wheelLabel = "₹10 OFF";
+          }
+          let subLabel = matchedServer.subLabel || pData.subLabel || "";
+          if (subLabel && (subLabel.toLowerCase().includes("any order") || subLabel.toLowerCase().includes("pizza orders") || effectivePrizeId === "10-off")) {
+            subLabel = "On Any Pizza";
+          }
+
           activePrizes.push({
             id: effectivePrizeId,
-            label: matchedServer.label || pData.name || pData.label || "Discount",
-            wheelLabel: matchedServer.wheelLabel || pData.wheelLabel || pData.name || pData.label,
-            subLabel: matchedServer.subLabel || pData.subLabel || "",
+            label,
+            wheelLabel,
+            subLabel,
             type: matchedServer.type || pData.type || (pData.isWinning ? "discount" : "no_win"),
             value: matchedServer.value !== undefined ? matchedServer.value : pData.value,
             weight: typeof pData.weight === "number" ? pData.weight : (matchedServer.weight || 0),

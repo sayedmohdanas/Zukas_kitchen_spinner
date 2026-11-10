@@ -279,7 +279,11 @@ export default function PizzaOrderModal({
             ...activeOffer,
             prizeName: String(activeOffer.prizeName || "₹10 OFF")
               .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
-              .replace(/15\s*%\s*OFF/gi, "₹15 OFF"),
+              .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+              .replace(/%\s*OFF/gi, " OFF")
+              .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+              .replace(/On Any Order/gi, "On Any Pizza")
+              .replace(/On Pizza Orders/gi, "On Any Pizza"),
           }
         : null;
 
@@ -332,7 +336,7 @@ export default function PizzaOrderModal({
               <div className="modal-active-offer-banner">
                 <Sparkles size={16} className="sparkle-gold" />
                 <span>
-                  Applied Offer on Pizza: <strong>{String(activeOffer.prizeName || "₹10 OFF").replace(/10\s*%\s*OFF/gi, "₹10 OFF").replace(/15\s*%\s*OFF/gi, "₹15 OFF")}</strong> (Code: <code>{activeOffer.couponCode}</code>)
+                  Applied Offer on Pizza: <strong>{String(activeOffer.prizeName || "₹10 OFF").replace(/10\s*%\s*OFF/gi, "₹10 OFF").replace(/15\s*%\s*OFF/gi, "₹15 OFF").replace(/%\s*OFF/gi, " OFF").replace(/ON ANY ORDER/gi, "ON ANY PIZZA").replace(/On Any Order/gi, "On Any Pizza").replace(/On Pizza Orders/gi, "On Any Pizza")}</strong> (Code: <code>{activeOffer.couponCode}</code>)
                 </span>
               </div>
             ) : (

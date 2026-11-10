@@ -106,11 +106,26 @@ export const fetchPrizesFromFirestore = async () => {
       const effectivePrizeId = oldToNewIds[prizeId] || prizeId;
       const localMatch = DEFAULT_PRIZES.find((p) => p.id === effectivePrizeId) || {};
 
+      let label = data.label !== undefined ? data.label : (data.name !== undefined ? data.name : (localMatch.label || "Discount Reward"));
+      if (effectivePrizeId === "10-off" || (label && label.toLowerCase().includes("10 off"))) {
+        label = "₹10 OFF ON ANY PIZZA";
+      }
+
+      let wheelLabel = data.wheelLabel !== undefined ? data.wheelLabel : (localMatch.wheelLabel || data.label || data.name);
+      if (effectivePrizeId === "10-off") {
+        wheelLabel = "₹10 OFF";
+      }
+
+      let subLabel = data.subLabel !== undefined ? data.subLabel : (localMatch.subLabel || "");
+      if (subLabel && (subLabel.toLowerCase().includes("any order") || subLabel.toLowerCase().includes("pizza orders") || effectivePrizeId === "10-off")) {
+        subLabel = "On Any Pizza";
+      }
+
       fetchedPrizes.push({
         id: effectivePrizeId,
-        label: data.label !== undefined ? data.label : (data.name !== undefined ? data.name : (localMatch.label || "Discount Reward")),
-        wheelLabel: data.wheelLabel !== undefined ? data.wheelLabel : (localMatch.wheelLabel || data.label || data.name),
-        subLabel: data.subLabel !== undefined ? data.subLabel : (localMatch.subLabel || ""),
+        label,
+        wheelLabel,
+        subLabel,
         type: data.type || localMatch.type || (data.isWinning ? "discount" : "no_win"),
         value: data.value !== undefined ? data.value : localMatch.value,
         weight: typeof data.weight === "number" ? data.weight : (localMatch.weight || 0),
@@ -211,7 +226,9 @@ export const seedFirestoreDefaults = async () => {
     },
     {
       id: "10-off",
-      name: "₹10 OFF",
+      name: "₹10 OFF ON ANY PIZZA",
+      wheelLabel: "₹10 OFF",
+      subLabel: "On Any Pizza",
       weight: 55,
       enabled: true,
       couponPrefix: "ZUKAS10",

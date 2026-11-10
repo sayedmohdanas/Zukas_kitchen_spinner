@@ -210,7 +210,10 @@ function cleanPrize(name) {
   return String(name)
     .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
     .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
-    .replace(/%\s*OFF/gi, " OFF");
+    .replace(/%\s*OFF/gi, " OFF")
+    .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+    .replace(/On Any Order/gi, "On Any Pizza")
+    .replace(/On Pizza Orders/gi, "On Any Pizza");
 }
 
             // Return existing active coupon info WITHOUT updating or claiming the new pending spin

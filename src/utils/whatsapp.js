@@ -27,6 +27,15 @@ export const getWhatsAppOrderLink = (prize = null, couponCode = null, userName =
       finalOfferText = `${prizeLabel} (${prize.subLabel})`;
     }
   }
+  if (finalOfferText) {
+    finalOfferText = String(finalOfferText)
+      .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+      .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+      .replace(/%\s*OFF/gi, " OFF")
+      .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+      .replace(/On Any Order/gi, "On Any Pizza")
+      .replace(/On Pizza Orders/gi, "On Any Pizza");
+  }
 
   let pizzaText = "";
   if (selectedPizza) {
@@ -96,7 +105,11 @@ export const getWhatsAppPizzaOrderLink = ({
   if (activeOffer && activeOffer.couponCode && hasPizzaInOrder) {
     const cleanOfferName = String(activeOffer.prizeName || "₹10 OFF")
       .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
-      .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
+      .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+      .replace(/%\s*OFF/gi, " OFF")
+      .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
+      .replace(/On Any Order/gi, "On Any Pizza")
+      .replace(/On Pizza Orders/gi, "On Any Pizza");
     offerText = `\n\n🎉 Active Offer: ${cleanOfferName}\n🎟️ Coupon Code: ${activeOffer.couponCode}\n*(Applied on Pizza)*`;
   }
 

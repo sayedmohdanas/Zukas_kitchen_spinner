@@ -17,9 +17,9 @@ const prizes = [
   },
   {
     id: "10-off",
-    label: "₹10 OFF",
+    label: "₹10 OFF ON ANY PIZZA",
     wheelLabel: "₹10 OFF",
-    subLabel: "On Any Order",
+    subLabel: "On Pizza Orders",
     type: "discount",
     value: 10,
     weight: 55, // 55% probability (most frequent)

@@ -111,9 +111,12 @@ export default function ResultModal({
       } else if (res && res.success) {
         setLocalClaimed(true);
         if (onClaimSuccess) {
+          const cleanName = String(res.prizeName || prize?.label || "₹10 OFF")
+            .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+            .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
           onClaimSuccess({
             couponCode: res.couponCode || couponCode,
-            prizeName: res.prizeName || prize?.label,
+            prizeName: cleanName,
           });
         }
       } else {
@@ -123,9 +126,12 @@ export default function ResultModal({
       // Local fallback so user is never blocked
       setLocalClaimed(true);
       if (onClaimSuccess) {
+        const cleanName = String(prize?.label || "₹10 OFF")
+          .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+          .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
         onClaimSuccess({
           couponCode: couponCode,
-          prizeName: prize?.label,
+          prizeName: cleanName,
         });
       }
     } finally {
@@ -135,9 +141,12 @@ export default function ResultModal({
 
   const handleExploreMenu = () => {
     if (!effectiveIsClaimed && onClaimSuccess) {
+      const cleanName = String(prize?.label || "₹10 OFF")
+        .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+        .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
       onClaimSuccess({
         couponCode: couponCode,
-        prizeName: prize?.label,
+        prizeName: cleanName,
       });
       claimCouponService(spinId).catch(() => {});
     }

@@ -276,6 +276,14 @@ export const spinWheelService = async (
   };
 };
 
+export function sanitizePrizeName(name) {
+  if (!name) return "₹10 OFF";
+  return String(name)
+    .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+    .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+    .replace(/%\s*OFF/gi, " OFF");
+}
+
 /**
  * Server-Authoritative Coupon Claim Service
  * 
@@ -311,7 +319,7 @@ export const claimCouponService = async (spinId, mobileNumber = null) => {
       spinId: spinId || `local_${Date.now()}`,
       mobile: normalizedMobile,
       couponCode: "ZUKAS10",
-      prizeName: "10% OFF",
+      prizeName: "₹10 OFF",
       message: "Coupon claimed successfully!",
     };
   }
@@ -328,10 +336,16 @@ export const claimCouponService = async (spinId, mobileNumber = null) => {
   }
 
   if (data && data.code === "EXISTING_COUPON") {
+    if (data.existingCoupon) {
+      data.existingCoupon.prizeName = sanitizePrizeName(data.existingCoupon.prizeName);
+    }
     return data;
   }
 
   if (response && response.ok && data && data.success) {
+    const cleanPrizeName = sanitizePrizeName(data.prizeName);
+    data.prizeName = cleanPrizeName;
+
     // Cache successful claim in localStorage for UX convenience
     if (normalizedMobile) {
       try {
@@ -340,7 +354,7 @@ export const claimCouponService = async (spinId, mobileNumber = null) => {
           JSON.stringify({
             mobile: normalizedMobile,
             spinId: data.spinId,
-            prizeName: data.prizeName,
+            prizeName: cleanPrizeName,
             couponCode: data.couponCode,
             createdAt: new Date().toISOString(),
           })
@@ -363,7 +377,7 @@ export const claimCouponService = async (spinId, mobileNumber = null) => {
     spinId: spinId || `local_${Date.now()}`,
     mobile: normalizedMobile,
     couponCode: "ZUKAS10",
-    prizeName: "10% OFF",
+    prizeName: "₹10 OFF",
     message: "Coupon claimed successfully!",
   };
 };

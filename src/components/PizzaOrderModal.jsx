@@ -258,6 +258,10 @@ export default function PizzaOrderModal({
     );
   };
 
+  const hasPizzaInOrder = orderItems.some(
+    (it) => !it.isBurger && it.category !== "burger" && !String(it.name || "").toLowerCase().includes("burger")
+  );
+
   const handleConfirmOrder = () => {
     trackEvent("order_clicked", {
       source: "pizza_order_modal_multi",
@@ -269,6 +273,16 @@ export default function PizzaOrderModal({
       hasLocation: Boolean(locationUrl.trim()),
     });
 
+    const cleanActiveOffer =
+      hasPizzaInOrder && activeOffer && activeOffer.couponCode
+        ? {
+            ...activeOffer,
+            prizeName: String(activeOffer.prizeName || "₹10 OFF")
+              .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+              .replace(/15\s*%\s*OFF/gi, "₹15 OFF"),
+          }
+        : null;
+
     const link = getWhatsAppPizzaOrderLink({
       items: orderItems,
       totalPrice: grandTotalPrice,
@@ -277,7 +291,7 @@ export default function PizzaOrderModal({
       deliveryAddress,
       landmark,
       locationUrl,
-      activeOffer,
+      activeOffer: cleanActiveOffer,
     });
 
     window.open(link, "_blank");
@@ -314,12 +328,20 @@ export default function PizzaOrderModal({
         <div className="order-modal-body">
           {/* Active Offer Banner */}
           {activeOffer && activeOffer.couponCode && (
-            <div className="modal-active-offer-banner">
-              <Sparkles size={16} className="sparkle-gold" />
-              <span>
-                Applied Offer: <strong>{activeOffer.prizeName}</strong> (Code: <code>{activeOffer.couponCode}</code>)
-              </span>
-            </div>
+            hasPizzaInOrder ? (
+              <div className="modal-active-offer-banner">
+                <Sparkles size={16} className="sparkle-gold" />
+                <span>
+                  Applied Offer on Pizza: <strong>{String(activeOffer.prizeName || "₹10 OFF").replace(/10\s*%\s*OFF/gi, "₹10 OFF").replace(/15\s*%\s*OFF/gi, "₹15 OFF")}</strong> (Code: <code>{activeOffer.couponCode}</code>)
+                </span>
+              </div>
+            ) : (
+              <div className="modal-offer-excluded-banner">
+                <span>
+                  ℹ️ <strong>Coupon not applied:</strong> Spin offers and coupons are valid on Pizza orders only (not applicable on Burgers).
+                </span>
+              </div>
+            )
           )}
 
           {/* Section 1: Order Items List */}

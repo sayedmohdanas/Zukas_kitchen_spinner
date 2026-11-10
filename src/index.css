@@ -3860,6 +3860,26 @@ a {
   color: #FDE68A;
 }
 
+.modal-offer-excluded-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFBEB;
+  border: 1.5px dashed #F59E0B;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #B45309;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+[data-theme="dark"] .modal-offer-excluded-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #FDE68A;
+}
+
 .order-items-group-header {
   display: flex;
   align-items: baseline;

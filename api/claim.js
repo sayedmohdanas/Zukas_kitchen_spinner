@@ -205,6 +205,14 @@ export default async function handler(req, res) {
             });
             const availableAgainIso = campaignConfig.repeatEnabled ? new Date(nextEligibleTime).toISOString() : null;
 
+function cleanPrize(name) {
+  if (!name) return "₹10 OFF";
+  return String(name)
+    .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+    .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
+    .replace(/%\s*OFF/gi, " OFF");
+}
+
             // Return existing active coupon info WITHOUT updating or claiming the new pending spin
             return {
               success: false,
@@ -213,7 +221,7 @@ export default async function handler(req, res) {
               existingCoupon: {
                 spinId: latestClaimedSpin.spinId,
                 couponCode: latestClaimedSpin.couponCode || null,
-                prizeName: latestClaimedSpin.prizeName || latestClaimedSpin.prizeId || "Spin & Win Offer",
+                prizeName: cleanPrize(latestClaimedSpin.prizeName || latestClaimedSpin.prizeId || "₹10 OFF"),
                 name: latestClaimedSpin.name || null,
                 claimedAt: new Date(latestTimeMs).toISOString(),
                 availableAgainAt: availableAgainIso,
@@ -255,7 +263,7 @@ export default async function handler(req, res) {
         spinId: spinDocRef.id,
         mobile: normalizedMobile,
         couponCode: spinData.couponCode,
-        prizeName: spinData.prizeName,
+        prizeName: cleanPrize(spinData.prizeName),
         name: spinData.name || null,
         message: "Coupon claimed successfully!",
       };

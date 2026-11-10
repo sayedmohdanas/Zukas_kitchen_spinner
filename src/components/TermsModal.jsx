@@ -8,6 +8,7 @@ export default function TermsModal({ isOpen, onClose }) {
   const rules = [
     "One promotional spin is allowed per customer per campaign period.",
     "Coupon codes generated during this promotional event are single-use only.",
+    "Offers and discount coupons are valid exclusively on Pizza orders and cannot be applied to Burgers.",
     "Offers and discounts cannot be combined with other existing restaurant promotions or coupons.",
     "Coupon validity, expiration, and minimum order requirements are subject to campaign guidelines.",
     "Zukas Kitchen reserves the right to modify, pause, or update campaign terms at its sole discretion.",

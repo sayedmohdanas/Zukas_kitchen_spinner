@@ -128,11 +128,14 @@ export default function App() {
     if (updatedCode) {
       setCouponCode(updatedCode);
     }
+    const cleanPrizeName = String(prizeName || selectedPrize?.label || "₹10 OFF")
+      .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+      .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
     setActiveOffer({
-      prizeName: prizeName || selectedPrize?.label,
+      prizeName: cleanPrizeName,
       couponCode: updatedCode || couponCode,
     });
-    trackEvent("coupon_claimed", { mobile: mobile || "unspecified", prize: selectedPrize?.label });
+    trackEvent("coupon_claimed", { mobile: mobile || "unspecified", prize: cleanPrizeName });
   };
 
   return (
@@ -202,7 +205,12 @@ export default function App() {
           isClaimed={isClaimed}
           claimedMobile={claimedMobile}
           onClaimSuccess={handleClaimSuccess}
-          onExistingCouponRecovered={(coupon) => setActiveOffer({ prizeName: coupon.prizeName, couponCode: coupon.couponCode })}
+          onExistingCouponRecovered={(coupon) => {
+            const cleanPrize = String(coupon.prizeName || "₹10 OFF")
+              .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+              .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
+            setActiveOffer({ prizeName: cleanPrize, couponCode: coupon.couponCode });
+          }}
           onClose={() => setShowResult(false)}
         />
       )}

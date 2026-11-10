@@ -87,9 +87,17 @@ export const getWhatsAppPizzaOrderLink = ({
     if (urlTrimmed) deliverySection += `\nCurrent Location:\n${urlTrimmed}`;
   }
 
+  // Spin promotional offers only apply to Pizza orders (Burgers are excluded)
+  const hasPizzaInOrder = Array.isArray(items) && items.length > 0
+    ? items.some((it) => !it.isBurger && it.category !== "burger" && !String(it.name || "").toLowerCase().includes("burger"))
+    : !String(pizzaName || "").toLowerCase().includes("burger");
+
   let offerText = "";
-  if (activeOffer && activeOffer.couponCode) {
-    offerText = `\n\n🎉 Active Offer: ${activeOffer.prizeName}\n🎟️ Coupon Code: ${activeOffer.couponCode}`;
+  if (activeOffer && activeOffer.couponCode && hasPizzaInOrder) {
+    const cleanOfferName = String(activeOffer.prizeName || "₹10 OFF")
+      .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
+      .replace(/15\s*%\s*OFF/gi, "₹15 OFF");
+    offerText = `\n\n🎉 Active Offer: ${cleanOfferName}\n🎟️ Coupon Code: ${activeOffer.couponCode}\n*(Applied on Pizza)*`;
   }
 
   // Multi-item formatting

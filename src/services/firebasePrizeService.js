@@ -109,15 +109,34 @@ export const fetchPrizesFromFirestore = async () => {
       let label = data.label !== undefined ? data.label : (data.name !== undefined ? data.name : (localMatch.label || "Discount Reward"));
       if (effectivePrizeId === "10-off" || (label && label.toLowerCase().includes("10 off"))) {
         label = "₹10 OFF ON ANY PIZZA";
+      } else if (effectivePrizeId === "15-off" || (label && label.toLowerCase().includes("15 off"))) {
+        label = "₹15 OFF ON ANY PIZZA";
+      } else if (effectivePrizeId === "free-campa-10" || (label && label.toLowerCase().includes("campa"))) {
+        label = "FREE CAMPA ON ANY PIZZA";
       }
 
       let wheelLabel = data.wheelLabel !== undefined ? data.wheelLabel : (localMatch.wheelLabel || data.label || data.name);
       if (effectivePrizeId === "10-off") {
         wheelLabel = "₹10 OFF";
+      } else if (effectivePrizeId === "15-off") {
+        wheelLabel = "₹15 OFF";
+      } else if (effectivePrizeId === "free-campa-10") {
+        wheelLabel = "FREE CAMPA";
       }
 
       let subLabel = data.subLabel !== undefined ? data.subLabel : (localMatch.subLabel || "");
-      if (subLabel && (subLabel.toLowerCase().includes("any order") || subLabel.toLowerCase().includes("pizza orders") || effectivePrizeId === "10-off")) {
+      if (
+        (subLabel && (
+          subLabel.toLowerCase().includes("any order") ||
+          subLabel.toLowerCase().includes("pizza orders") ||
+          subLabel.toLowerCase().includes("super saver") ||
+          subLabel.toLowerCase().includes("worth ₹10") ||
+          subLabel.toLowerCase().includes("worth 10")
+        )) ||
+        effectivePrizeId === "10-off" ||
+        effectivePrizeId === "15-off" ||
+        effectivePrizeId === "free-campa-10"
+      ) {
         subLabel = "On Any Pizza";
       }
 
@@ -252,7 +271,9 @@ export const seedFirestoreDefaults = async () => {
     },
     {
       id: "15-off",
-      name: "₹15 OFF",
+      name: "₹15 OFF ON ANY PIZZA",
+      wheelLabel: "₹15 OFF",
+      subLabel: "On Any Pizza",
       weight: 8,
       enabled: true,
       couponPrefix: "ZUKAS15",
@@ -268,7 +289,9 @@ export const seedFirestoreDefaults = async () => {
     },
     {
       id: "free-campa-10",
-      name: "FREE CAMPA WORTH ₹10",
+      name: "FREE CAMPA ON ANY PIZZA",
+      wheelLabel: "FREE CAMPA",
+      subLabel: "On Any Pizza",
       weight: 10,
       enabled: true,
       couponPrefix: "ZUKASCAMPA",

@@ -274,7 +274,7 @@ export default function PizzaOrderModal({
     });
 
     const cleanActiveOffer =
-      hasPizzaInOrder && activeOffer && activeOffer.couponCode
+      activeOffer && activeOffer.couponCode
         ? {
             ...activeOffer,
             prizeName: String(activeOffer.prizeName || "₹10 OFF")
@@ -342,7 +342,7 @@ export default function PizzaOrderModal({
             ) : (
               <div className="modal-offer-excluded-banner">
                 <span>
-                  ℹ️ <strong>Coupon not applied:</strong> Spin offers and coupons are valid on Pizza orders only (not applicable on Burgers).
+                  ⚠️ <strong>Coupon not applied:</strong> Spin coupons do not work with only burger orders (valid on Pizza orders only).
                 </span>
               </div>
             )

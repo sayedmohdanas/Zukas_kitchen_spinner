@@ -10,9 +10,9 @@ const SERVER_PRIZES = [
   { id: "10-off", label: "₹10 OFF ON ANY PIZZA", wheelLabel: "₹10 OFF", subLabel: "On Any Pizza", type: "discount", value: 10, weight: 55, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS10", bgColor: "#FF9F1C", textColor: "#1E293B", badge: "SAVINGS", accentColor: "#FFFFFF" },
   { id: "20-off", label: "₹20 OFF", wheelLabel: "₹20 OFF", subLabel: "Instant Savings", type: "discount", value: 20, weight: 12, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS20", bgColor: "#FFB703", textColor: "#1E293B", badge: "BONUS", accentColor: "#198C09" },
   { id: "better-luck", label: "BETTER LUCK NEXT TIME", wheelLabel: "BETTER LUCK", subLabel: "NEXT TIME", type: "no_win", value: null, weight: 10, enabled: true, isWinningPrize: false, couponPrefix: null, bgColor: "#334155", textColor: "#F8FAFC", badge: "TRY AGAIN", accentColor: "#94A3B8" },
-  { id: "15-off", label: "₹15 OFF", wheelLabel: "₹15 OFF", subLabel: "Super Saver", type: "discount", value: 15, weight: 8, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS15", bgColor: "#2A9D8F", textColor: "#FFFFFF", badge: "BIG DEAL", accentColor: "#FFD700" },
+  { id: "15-off", label: "₹15 OFF ON ANY PIZZA", wheelLabel: "₹15 OFF", subLabel: "On Any Pizza", type: "discount", value: 15, weight: 8, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS15", bgColor: "#2A9D8F", textColor: "#FFFFFF", badge: "BIG DEAL", accentColor: "#FFD700" },
   { id: "30-off", label: "₹30 OFF ON ORDER 3 ANY MEDIUM PIZZA", wheelLabel: "₹30 OFF", subLabel: "ON ORDER 3 ANY MEDIUM PIZZA", type: "discount", value: 30, weight: 5, enabled: true, isWinningPrize: true, couponPrefix: "ZUKAS30", bgColor: "#F4A261", textColor: "#1E293B", badge: "YUMMY", accentColor: "#198C09" },
-  { id: "free-campa-10", label: "FREE CAMPA WORTH ₹10", wheelLabel: "FREE CAMPA", subLabel: "Worth ₹10", type: "freebie", value: 10, weight: 60, enabled: true, isWinningPrize: true, couponPrefix: "ZUKASCAMPA", bgColor: "#E63946", textColor: "#FFFFFF", badge: "FREE DRINK", accentColor: "#F1FAEE" }
+  { id: "free-campa-10", label: "FREE CAMPA ON ANY PIZZA", wheelLabel: "FREE CAMPA", subLabel: "On Any Pizza", type: "freebie", value: 10, weight: 60, enabled: true, isWinningPrize: true, couponPrefix: "ZUKASCAMPA", bgColor: "#E63946", textColor: "#FFFFFF", badge: "FREE DRINK", accentColor: "#F1FAEE" }
 ];
 
 /**
@@ -134,13 +134,34 @@ exports.spinWheel = onCall({ cors: true }, async (request) => {
           let label = matchedServer.label || pData.name || pData.label || "Discount";
           if (effectivePrizeId === "10-off" || (label && label.toLowerCase().includes("10 off"))) {
             label = "₹10 OFF ON ANY PIZZA";
+          } else if (effectivePrizeId === "15-off" || (label && label.toLowerCase().includes("15 off"))) {
+            label = "₹15 OFF ON ANY PIZZA";
+          } else if (effectivePrizeId === "free-campa-10" || (label && label.toLowerCase().includes("campa"))) {
+            label = "FREE CAMPA ON ANY PIZZA";
           }
+
           let wheelLabel = matchedServer.wheelLabel || pData.wheelLabel || pData.name || pData.label;
           if (effectivePrizeId === "10-off") {
             wheelLabel = "₹10 OFF";
+          } else if (effectivePrizeId === "15-off") {
+            wheelLabel = "₹15 OFF";
+          } else if (effectivePrizeId === "free-campa-10") {
+            wheelLabel = "FREE CAMPA";
           }
+
           let subLabel = matchedServer.subLabel || pData.subLabel || "";
-          if (subLabel && (subLabel.toLowerCase().includes("any order") || subLabel.toLowerCase().includes("pizza orders") || effectivePrizeId === "10-off")) {
+          if (
+            (subLabel && (
+              subLabel.toLowerCase().includes("any order") ||
+              subLabel.toLowerCase().includes("pizza orders") ||
+              subLabel.toLowerCase().includes("super saver") ||
+              subLabel.toLowerCase().includes("worth ₹10") ||
+              subLabel.toLowerCase().includes("worth 10")
+            )) ||
+            effectivePrizeId === "10-off" ||
+            effectivePrizeId === "15-off" ||
+            effectivePrizeId === "free-campa-10"
+          ) {
             subLabel = "On Any Pizza";
           }
 

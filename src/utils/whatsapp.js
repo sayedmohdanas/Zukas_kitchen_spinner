@@ -37,9 +37,14 @@ export const getWhatsAppOrderLink = (prize = null, couponCode = null, userName =
       .replace(/On Pizza Orders/gi, "On Any Pizza");
   }
 
+  const isBurger = selectedPizza && String(selectedPizza).toLowerCase().includes("burger");
   let pizzaText = "";
   if (selectedPizza) {
-    pizzaText = `\n\nI'd like to order:\nPizza: ${selectedPizza}`;
+    if (isBurger) {
+      pizzaText = `\n\nI'd like to order:\nBurger: ${selectedPizza}`;
+    } else {
+      pizzaText = `\n\nI'd like to order:\nPizza: ${selectedPizza}`;
+    }
     if (selectedSize) {
       pizzaText += `\nSize: ${selectedSize.charAt(0).toUpperCase() + selectedSize.slice(1)}`;
     }
@@ -49,7 +54,11 @@ export const getWhatsAppOrderLink = (prize = null, couponCode = null, userName =
   }
 
   if (isWinning && finalOfferText && couponCode) {
-    messageText = `${greeting}\n\nI have an active Spin & Win offer 🎉\n\nOffer: ${finalOfferText}\nCoupon Code: ${couponCode}${pizzaText ? pizzaText : "\n\nI'd like to place an order."}`;
+    if (isBurger) {
+      messageText = `${greeting}\n\nI have an active Spin & Win coupon: ${couponCode} (${finalOfferText})\n⚠️ *(Note: Coupons do not work with only burger orders. Valid on Pizza orders only.)*${pizzaText ? pizzaText : "\n\nI'd like to place an order."}`;
+    } else {
+      messageText = `${greeting}\n\nI have an active Spin & Win offer 🎉\n\nOffer: ${finalOfferText}\nCoupon Code: ${couponCode}${pizzaText ? pizzaText : "\n\nI'd like to place an order."}`;
+    }
   } else {
     messageText = `${greeting}${pizzaText ? pizzaText : "\n\nI'd like to place an order."}`;
   }
@@ -102,7 +111,7 @@ export const getWhatsAppPizzaOrderLink = ({
     : !String(pizzaName || "").toLowerCase().includes("burger");
 
   let offerText = "";
-  if (activeOffer && activeOffer.couponCode && hasPizzaInOrder) {
+  if (activeOffer && activeOffer.couponCode) {
     const cleanOfferName = String(activeOffer.prizeName || "₹10 OFF")
       .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
       .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
@@ -110,7 +119,12 @@ export const getWhatsAppPizzaOrderLink = ({
       .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
       .replace(/On Any Order/gi, "On Any Pizza")
       .replace(/On Pizza Orders/gi, "On Any Pizza");
-    offerText = `\n\n🎉 Active Offer: ${cleanOfferName}\n🎟️ Coupon Code: ${activeOffer.couponCode}\n*(Applied on Pizza)*`;
+
+    if (hasPizzaInOrder) {
+      offerText = `\n\n🎉 Active Offer: ${cleanOfferName}\n🎟️ Coupon Code: ${activeOffer.couponCode}\n*(Applied on Pizza)*`;
+    } else {
+      offerText = `\n\n🎟️ Coupon Code: ${activeOffer.couponCode} (${cleanOfferName})\n⚠️ *(Note: Coupons do not work with only burger orders. Valid on Pizza orders only.)*`;
+    }
   }
 
   // Multi-item formatting

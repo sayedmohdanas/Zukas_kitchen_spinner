@@ -62,9 +62,9 @@ const prizes = [
   },
   {
     id: "15-off",
-    label: "₹15 OFF",
+    label: "₹15 OFF ON ANY PIZZA",
     wheelLabel: "₹15 OFF",
-    subLabel: "Super Saver",
+    subLabel: "On Any Pizza",
     type: "discount",
     value: 15,
     weight: 8, // 8% probability
@@ -92,9 +92,9 @@ const prizes = [
   },
   {
     id: "free-campa-10",
-    label: "FREE CAMPA WORTH ₹10",
+    label: "FREE CAMPA ON ANY PIZZA",
     wheelLabel: "FREE CAMPA",
-    subLabel: "Worth ₹10",
+    subLabel: "On Any Pizza",
     type: "freebie",
     value: 10,
     weight: 60,

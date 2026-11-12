@@ -11,6 +11,8 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
+  Banknote,
+  QrCode,
 } from "lucide-react";
 import { getWhatsAppPizzaOrderLink } from "../utils/whatsapp";
 import { calculateOfferDiscount } from "../utils/offers";
@@ -29,16 +31,46 @@ export default function PizzaOrderModal({
   const [orderItems, setOrderItems] = useState([]);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
 
-  // Delivery details state (optional)
-  const [customerName, setCustomerName] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [landmark, setLandmark] = useState("");
+  // Delivery details state with localStorage auto-fill
+  const [customerName, setCustomerName] = useState(() => {
+    try {
+      return localStorage.getItem("zukas_customer_name") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [contactNumber, setContactNumber] = useState(() => {
+    try {
+      return localStorage.getItem("zukas_contact_number") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [deliveryAddress, setDeliveryAddress] = useState(() => {
+    try {
+      const saved = localStorage.getItem("zukas_delivery_address") || "";
+      return saved === "[object Object]" ? "" : saved;
+    } catch {
+      return "";
+    }
+  });
+  const [landmark, setLandmark] = useState(() => {
+    try {
+      return localStorage.getItem("zukas_landmark") || "";
+    } catch {
+      return "";
+    }
+  });
   const [isLocating, setIsLocating] = useState(false);
   const [locationUrl, setLocationUrl] = useState("");
   const [locationCoords, setLocationCoords] = useState(null);
   const [locationError, setLocationError] = useState("");
   const [locationSuccess, setLocationSuccess] = useState(false);
+
+  // Payment Mode State
+  const [paymentMethod, setPaymentMethod] = useState("cod"); // "cod" | "upi"
+  const [cashChangeOption, setCashChangeOption] = useState("exact"); // "exact" | "500" | "200" | "custom"
+  const [customCashChange, setCustomCashChange] = useState("");
 
   const extraCheesePrice = 25;
 
@@ -267,6 +299,17 @@ export default function PizzaOrderModal({
   );
 
   const handleConfirmOrder = () => {
+    try {
+      if (customerName.trim()) localStorage.setItem("zukas_customer_name", customerName.trim());
+      if (contactNumber.trim()) localStorage.setItem("zukas_contact_number", contactNumber.trim());
+      if (deliveryAddress.trim() && deliveryAddress.trim() !== "[object Object]") {
+        localStorage.setItem("zukas_delivery_address", deliveryAddress.trim());
+      }
+      if (landmark.trim()) localStorage.setItem("zukas_landmark", landmark.trim());
+    } catch {
+      // ignore
+    }
+
     trackEvent("order_clicked", {
       source: "pizza_order_modal_multi",
       itemsCount: totalItemsCount,
@@ -277,6 +320,8 @@ export default function PizzaOrderModal({
       hasContact: Boolean(contactNumber.trim()),
       hasAddress: Boolean(deliveryAddress.trim()),
       hasLocation: Boolean(locationUrl.trim()),
+      paymentMethod,
+      cashChangeOption,
     });
 
     const link = getWhatsAppPizzaOrderLink({
@@ -287,6 +332,9 @@ export default function PizzaOrderModal({
       deliveryAddress,
       landmark,
       locationUrl,
+      paymentMethod,
+      cashChangeOption,
+      customCashChange,
       activeOffer,
     });
 
@@ -676,7 +724,148 @@ export default function PizzaOrderModal({
             </div>
           </div>
 
-          {/* Section 3: Order Summary Breakdown */}
+          {/* Section 3: Payment Method Selection */}
+          <div className="order-option-group payment-option-group">
+            <label className="order-group-label">💳 Payment Method</label>
+
+            <div className="payment-mode-grid">
+              {/* Cash on Delivery Card */}
+              <div
+                className={`payment-mode-card ${paymentMethod === "cod" ? "selected" : ""}`}
+                onClick={() => setPaymentMethod("cod")}
+                role="button"
+                tabIndex={0}
+              >
+                <div className="payment-card-left">
+                  <div className="payment-mode-icon-circle cash">
+                    <Banknote size={20} />
+                  </div>
+                  <div className="payment-card-text">
+                    <div className="payment-title">Cash on Delivery</div>
+                    <div className="payment-desc">Pay cash when food arrives</div>
+                  </div>
+                </div>
+                <div className={`payment-radio-circle ${paymentMethod === "cod" ? "checked" : ""}`}>
+                  {paymentMethod === "cod" && <div className="radio-dot" />}
+                </div>
+              </div>
+
+              {/* UPI on Delivery Card */}
+              <div
+                className={`payment-mode-card ${paymentMethod === "upi" ? "selected" : ""}`}
+                onClick={() => setPaymentMethod("upi")}
+                role="button"
+                tabIndex={0}
+              >
+                <div className="payment-card-left">
+                  <div className="payment-mode-icon-circle upi">
+                    <QrCode size={20} />
+                  </div>
+                  <div className="payment-card-text">
+                    <div className="payment-title">UPI on Delivery</div>
+                    <div className="payment-desc">Scan QR / GPay / PhonePe / Paytm</div>
+                  </div>
+                </div>
+                <div className={`payment-radio-circle ${paymentMethod === "upi" ? "checked" : ""}`}>
+                  {paymentMethod === "upi" && <div className="radio-dot" />}
+                </div>
+              </div>
+            </div>
+
+            {/* Cash on Delivery Change Requirement Box */}
+            {paymentMethod === "cod" && (
+              <div className="cash-change-container">
+                <div className="cash-change-prompt">
+                  <span className="cash-change-question">💵 Do you have exact cash change?</span>
+                  <span className="cash-change-sub">Tells delivery boy whether to bring change note</span>
+                </div>
+
+                <div className="cash-change-pills">
+                  <button
+                    type="button"
+                    className={`cash-pill-btn ${cashChangeOption === "exact" ? "active" : ""}`}
+                    onClick={() => setCashChangeOption("exact")}
+                  >
+                    <span>✅ Exact Cash</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`cash-pill-btn ${cashChangeOption === "500" ? "active" : ""}`}
+                    onClick={() => setCashChangeOption("500")}
+                  >
+                    <span>💵 Need change for ₹500</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`cash-pill-btn ${cashChangeOption === "200" ? "active" : ""}`}
+                    onClick={() => setCashChangeOption("200")}
+                  >
+                    <span>💵 Need change for ₹200</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`cash-pill-btn ${cashChangeOption === "custom" ? "active" : ""}`}
+                    onClick={() => setCashChangeOption("custom")}
+                  >
+                    <span>✏️ Other note</span>
+                  </button>
+                </div>
+
+                {cashChangeOption === "custom" && (
+                  <div className="custom-change-input-wrap">
+                    <label htmlFor="custom-cash-input" className="input-sublabel">
+                      Enter note amount you will give:
+                    </label>
+                    <div className="custom-cash-input-group">
+                      <span className="currency-symbol">₹</span>
+                      <input
+                        type="number"
+                        id="custom-cash-input"
+                        className="modal-text-input custom-cash-field"
+                        placeholder="e.g. 100, 50..."
+                        value={customCashChange}
+                        onChange={(e) => setCustomCashChange(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Change amount preview note */}
+                {cashChangeOption === "500" && (
+                  <div className="change-calculated-note">
+                    🛵 <strong>Delivery Note:</strong> Delivery boy will bring <strong>₹{Math.max(0, 500 - finalGrandTotal)}</strong> change with him.
+                  </div>
+                )}
+                {cashChangeOption === "200" && (
+                  <div className="change-calculated-note">
+                    🛵 <strong>Delivery Note:</strong> Delivery boy will bring <strong>₹{Math.max(0, 200 - finalGrandTotal)}</strong> change with him.
+                  </div>
+                )}
+                {cashChangeOption === "custom" && Number(customCashChange) > finalGrandTotal && (
+                  <div className="change-calculated-note">
+                    🛵 <strong>Delivery Note:</strong> Delivery boy will bring <strong>₹{Number(customCashChange) - finalGrandTotal}</strong> change with him.
+                  </div>
+                )}
+                {cashChangeOption === "exact" && (
+                  <div className="change-calculated-note green-note">
+                    ✅ <strong>Ready!</strong> Exact cash ensures faster delivery handover.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {paymentMethod === "upi" && (
+              <div className="upi-notice-box">
+                <span className="upi-badge">ONLINE PAYMENT</span>
+                <p>Delivery boy will bring the official <strong>Zukas Kitchen UPI QR Code</strong> for you to scan and pay on delivery (Google Pay, PhonePe, Paytm, or any UPI app).</p>
+              </div>
+            )}
+          </div>
+
+          {/* Section 4: Order Summary Breakdown */}
           <div className="order-summary-card">
             <h4 className="summary-title">Order Bill Summary ({totalItemsCount} items)</h4>
 
@@ -730,6 +919,22 @@ export default function PizzaOrderModal({
                 <span className="green-text">Captured ✓</span>
               </div>
             )}
+
+            {/* Payment Mode in Summary */}
+            <div className="summary-row highlight-addon">
+              <span>Payment Mode:</span>
+              <span className="green-text" style={{ fontWeight: 700 }}>
+                {paymentMethod === "upi"
+                  ? "📱 UPI on Delivery"
+                  : cashChangeOption === "500"
+                  ? "💵 Cash (Need ₹500 change)"
+                  : cashChangeOption === "200"
+                  ? "💵 Cash (Need ₹200 change)"
+                  : cashChangeOption === "custom" && customCashChange
+                  ? `💵 Cash (Need ₹${customCashChange} change)`
+                  : "💵 Cash (Exact change)"}
+              </span>
+            </div>
 
             <div className="summary-divider" />
             {(orderItems.length > 1 || discountAmount > 0 || (offerEvaluation.isFreebie && offerEvaluation.applicable)) && (

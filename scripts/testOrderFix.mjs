@@ -222,5 +222,68 @@ console.log("=== RUNNING ORDER FIX TESTS ===\n");
   }
 }
 
+// Test 7: Payment Mode - Cash on Delivery (Need change for ₹500)
+{
+  const link = getWhatsAppPizzaOrderLink({
+    pizzaName: "Pizza Margherita",
+    size: "medium",
+    basePrice: 139,
+    customerName: "Prince",
+    contactNumber: "9277202580",
+    deliveryAddress: "Jairajpur",
+    landmark: "Ambedkar park",
+    paymentMethod: "cod",
+    cashChangeOption: "500",
+  });
+  const text = new URL(link).searchParams.get("text");
+
+  console.log("--- TEST 7: COD with Change for ₹500 ---");
+  console.log(text);
+  console.log("----------------------------------------\n");
+
+  if (!text.includes("💵 *Payment Mode:* Cash on Delivery")) {
+    throw new Error("Test 7 Failed: Expected Cash on Delivery");
+  }
+  if (!text.includes("Paying with ₹500 note (Return ₹361 change)")) {
+    throw new Error("Test 7 Failed: Expected Return ₹361 change calculation");
+  }
+}
+
+// Test 8: Payment Mode - Cash on Delivery (Exact change)
+{
+  const link = getWhatsAppPizzaOrderLink({
+    pizzaName: "Pizza Margherita",
+    size: "medium",
+    basePrice: 139,
+    paymentMethod: "cod",
+    cashChangeOption: "exact",
+  });
+  const text = new URL(link).searchParams.get("text");
+
+  if (!text.includes("💵 *Payment Mode:* Cash on Delivery (✅ Customer has exact change)")) {
+    throw new Error("Test 8 Failed: Expected exact change confirmation");
+  }
+}
+
+// Test 9: Payment Mode - UPI on Delivery
+{
+  const link = getWhatsAppPizzaOrderLink({
+    pizzaName: "Pizza Margherita",
+    size: "medium",
+    basePrice: 139,
+    paymentMethod: "upi",
+  });
+  const text = new URL(link).searchParams.get("text");
+
+  console.log("--- TEST 9: UPI on Delivery ---");
+  console.log(text);
+  console.log("-------------------------------\n");
+
+  if (!text.includes("📱 *Payment Mode:* UPI on Delivery (Google Pay / PhonePe / QR Code)")) {
+    throw new Error("Test 9 Failed: Expected UPI on Delivery");
+  }
+}
+
 console.log("ALL TESTS PASSED SUCCESSFULLY! ✅");
+
 

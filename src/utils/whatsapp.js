@@ -86,10 +86,40 @@ export const getWhatsAppPizzaOrderLink = ({
   deliveryAddress = "",
   landmark = "",
   locationUrl = "",
+  paymentMethod = "cod",
+  cashChangeOption = "exact",
+  customCashChange = "",
   activeOffer = null,
 }) => {
   const number = config.whatsappNumber;
   const nameTrimmed = String(customerName || "").trim();
+
+  const formatPaymentSection = (finalTotal) => {
+    if (paymentMethod === "upi") {
+      return "\n\n📱 *Payment Mode:* UPI on Delivery (Google Pay / PhonePe / QR Code)";
+    }
+    if (paymentMethod === "cod") {
+      if (cashChangeOption === "exact") {
+        return "\n\n💵 *Payment Mode:* Cash on Delivery (✅ Customer has exact change)";
+      }
+      if (cashChangeOption === "500") {
+        const returnAmount = Math.max(0, 500 - finalTotal);
+        return `\n\n💵 *Payment Mode:* Cash on Delivery\n⚠️ *Change Needed:* Paying with ₹500 note (Return ₹${returnAmount} change)`;
+      }
+      if (cashChangeOption === "200") {
+        const returnAmount = Math.max(0, 200 - finalTotal);
+        return `\n\n💵 *Payment Mode:* Cash on Delivery\n⚠️ *Change Needed:* Paying with ₹200 note (Return ₹${returnAmount} change)`;
+      }
+      if (cashChangeOption === "custom" && customCashChange) {
+        const customNoteNum = Number(customCashChange) || 0;
+        const returnAmount = customNoteNum > finalTotal ? Math.max(0, customNoteNum - finalTotal) : null;
+        const returnText = returnAmount !== null ? ` (Return ₹${returnAmount} change)` : "";
+        return `\n\n💵 *Payment Mode:* Cash on Delivery\n⚠️ *Change Needed:* Paying with ₹${customCashChange} note${returnText}`;
+      }
+      return "\n\n💵 *Payment Mode:* Cash on Delivery (COD)";
+    }
+    return "";
+  };
 
   let deliverySection = "";
   const rawAddress = typeof deliveryAddress === "object" && deliveryAddress !== null
@@ -191,7 +221,8 @@ export const getWhatsAppPizzaOrderLink = ({
       }
     }
 
-    const messageText = `${greeting}\n\nI'd like to order:\n\n${formattedItems}${billBreakdown}${deliverySection}\n\nPlease confirm my order. Thank you!`;
+    const paymentSection = formatPaymentSection(finalCalculatedTotal);
+    const messageText = `${greeting}\n\nI'd like to order:\n\n${formattedItems}${billBreakdown}${paymentSection}${deliverySection}\n\nPlease confirm my order. Thank you!`;
 
     return `https://wa.me/${number}?text=${encodeURIComponent(messageText)}`;
   }
@@ -249,7 +280,8 @@ export const getWhatsAppPizzaOrderLink = ({
     billBreakdown = `\n\n💰 *Total Bill:* ₹${finalCalculatedTotal}`;
   }
 
-  const messageText = `${greeting}\n\nI'd like to order:\n\n${itemDetails}${billBreakdown}${deliverySection}\n\nPlease confirm my order. Thank you!`;
+  const paymentSection = formatPaymentSection(finalCalculatedTotal);
+  const messageText = `${greeting}\n\nI'd like to order:\n\n${itemDetails}${billBreakdown}${paymentSection}${deliverySection}\n\nPlease confirm my order. Thank you!`;
 
   return `https://wa.me/${number}?text=${encodeURIComponent(messageText)}`;
 };

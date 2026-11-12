@@ -10,10 +10,10 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
-  ShoppingBag,
   Sparkles,
 } from "lucide-react";
 import { getWhatsAppPizzaOrderLink } from "../utils/whatsapp";
+import { calculateOfferDiscount } from "../utils/offers";
 import { trackEvent } from "../utils/analytics";
 import LocationPickerMap from "./LocationPickerMap";
 import { pizzaMenuItems } from "../data/menuData";
@@ -95,10 +95,14 @@ export default function PizzaOrderModal({
 
   // Order Calculations
   const totalItemsCount = orderItems.reduce((acc, it) => acc + (it.quantity || 1), 0);
-  const grandTotalPrice = orderItems.reduce((acc, it) => {
-    const itemUnit = it.basePrice + (it.hasExtraCheese ? extraCheesePrice : 0);
+  const itemsSubtotal = orderItems.reduce((acc, it) => {
+    const itemUnit = (Number(it.basePrice) || 0) + (it.hasExtraCheese ? extraCheesePrice : 0);
     return acc + itemUnit * (it.quantity || 1);
   }, 0);
+
+  const offerEvaluation = calculateOfferDiscount(activeOffer, orderItems);
+  const discountAmount = offerEvaluation.applicable ? offerEvaluation.discount : 0;
+  const finalGrandTotal = Math.max(0, itemsSubtotal - discountAmount);
 
   // Item Action Handlers
   const handleItemQuantityChange = (itemId, delta) => {
@@ -266,36 +270,24 @@ export default function PizzaOrderModal({
     trackEvent("order_clicked", {
       source: "pizza_order_modal_multi",
       itemsCount: totalItemsCount,
-      totalPrice: grandTotalPrice,
+      subtotal: itemsSubtotal,
+      discount: discountAmount,
+      totalPrice: finalGrandTotal,
       hasName: Boolean(customerName.trim()),
       hasContact: Boolean(contactNumber.trim()),
       hasAddress: Boolean(deliveryAddress.trim()),
       hasLocation: Boolean(locationUrl.trim()),
     });
 
-    const cleanActiveOffer =
-      activeOffer && activeOffer.couponCode
-        ? {
-            ...activeOffer,
-            prizeName: String(activeOffer.prizeName || "₹10 OFF")
-              .replace(/10\s*%\s*OFF/gi, "₹10 OFF")
-              .replace(/15\s*%\s*OFF/gi, "₹15 OFF")
-              .replace(/%\s*OFF/gi, " OFF")
-              .replace(/ON ANY ORDER/gi, "ON ANY PIZZA")
-              .replace(/On Any Order/gi, "On Any Pizza")
-              .replace(/On Pizza Orders/gi, "On Any Pizza"),
-          }
-        : null;
-
     const link = getWhatsAppPizzaOrderLink({
       items: orderItems,
-      totalPrice: grandTotalPrice,
+      totalPrice: finalGrandTotal,
       customerName,
       contactNumber,
       deliveryAddress,
       landmark,
       locationUrl,
-      activeOffer: cleanActiveOffer,
+      activeOffer,
     });
 
     window.open(link, "_blank");
@@ -333,12 +325,23 @@ export default function PizzaOrderModal({
           {/* Active Offer Banner */}
           {activeOffer && activeOffer.couponCode && (
             hasPizzaInOrder ? (
-              <div className="modal-active-offer-banner">
-                <Sparkles size={16} className="sparkle-gold" />
-                <span>
-                  Applied Offer on Pizza: <strong>{String(activeOffer.prizeName || "₹10 OFF").replace(/10\s*%\s*OFF/gi, "₹10 OFF").replace(/15\s*%\s*OFF/gi, "₹15 OFF").replace(/%\s*OFF/gi, " OFF").replace(/ON ANY ORDER/gi, "ON ANY PIZZA").replace(/On Any Order/gi, "On Any Pizza").replace(/On Pizza Orders/gi, "On Any Pizza")}</strong> (Code: <code>{activeOffer.couponCode}</code>)
-                </span>
-              </div>
+              offerEvaluation.applicable ? (
+                <div className="modal-active-offer-banner">
+                  <Sparkles size={16} className="sparkle-gold" />
+                  <span>
+                    Applied Offer on Pizza: <strong>{offerEvaluation.cleanOfferName}</strong> (Code: <code>{activeOffer.couponCode}</code>) —{" "}
+                    <strong style={{ color: "#198C09" }}>
+                      {offerEvaluation.isFreebie ? offerEvaluation.freebieText : `Saved ₹${discountAmount}!`}
+                    </strong>
+                  </span>
+                </div>
+              ) : (
+                <div className="modal-offer-excluded-banner">
+                  <span>
+                    ⚠️ <strong>Coupon Requirement:</strong> {offerEvaluation.requirementNote || "Valid on Pizza orders."}
+                  </span>
+                </div>
+              )
             ) : (
               <div className="modal-offer-excluded-banner">
                 <span>
@@ -600,9 +603,11 @@ export default function PizzaOrderModal({
                 />
                 {villagesList && villagesList.length > 0 && (
                   <datalist id="villages-datalist">
-                    {villagesList.map((village, idx) => (
-                      <option key={idx} value={village} />
-                    ))}
+                    {villagesList.map((village, idx) => {
+                      const villageName = typeof village === "object" && village !== null ? (village.name || "") : String(village || "");
+                      if (!villageName) return null;
+                      return <option key={village?.id || idx} value={villageName} />;
+                    })}
                   </datalist>
                 )}
               </div>
@@ -705,7 +710,7 @@ export default function PizzaOrderModal({
               </div>
             )}
 
-            {deliveryAddress.trim() && (
+            {deliveryAddress.trim() && deliveryAddress.trim() !== "[object Object]" && (
               <div className="summary-row">
                 <span>Address:</span>
                 <span className="summary-address-text">{deliveryAddress.trim()}</span>
@@ -727,9 +732,30 @@ export default function PizzaOrderModal({
             )}
 
             <div className="summary-divider" />
+            {(orderItems.length > 1 || discountAmount > 0 || (offerEvaluation.isFreebie && offerEvaluation.applicable)) && (
+              <>
+                <div className="summary-row">
+                  <span>Items Subtotal:</span>
+                  <span>₹{itemsSubtotal}</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="summary-row highlight-addon">
+                    <span>🎉 Offer Discount:</span>
+                    <span className="green-text">-₹{discountAmount}</span>
+                  </div>
+                )}
+                {offerEvaluation.isFreebie && offerEvaluation.applicable && (
+                  <div className="summary-row highlight-addon">
+                    <span>🎁 Free Reward:</span>
+                    <span className="green-text">{offerEvaluation.freebieText}</span>
+                  </div>
+                )}
+                <div className="summary-divider" />
+              </>
+            )}
             <div className="summary-row total-row">
               <span>GRAND TOTAL:</span>
-              <span className="total-amount">₹{grandTotalPrice}</span>
+              <span className="total-amount">₹{finalGrandTotal}</span>
             </div>
           </div>
         </div>
@@ -738,7 +764,7 @@ export default function PizzaOrderModal({
         <div className="order-modal-footer">
           <button type="button" className="confirm-whatsapp-order-btn" onClick={handleConfirmOrder}>
             <MessageSquare size={20} />
-            <span>CONFIRM & ORDER {totalItemsCount} {totalItemsCount === 1 ? "ITEM" : "ITEMS"} ON WHATSAPP • ₹{grandTotalPrice}</span>
+            <span>CONFIRM & ORDER {totalItemsCount} {totalItemsCount === 1 ? "ITEM" : "ITEMS"} ON WHATSAPP • ₹{finalGrandTotal}</span>
           </button>
         </div>
       </div>

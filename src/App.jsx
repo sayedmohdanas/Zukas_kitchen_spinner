@@ -113,8 +113,11 @@ export default function App() {
     setShowResult(true);
     if (selectedPrize?.isWinningPrize) {
       setActiveOffer({
+        prizeId: selectedPrize.id,
         prizeName: selectedPrize.label,
         couponCode: couponCode,
+        prizeValue: selectedPrize.value,
+        prizeType: selectedPrize.type,
       });
     }
     trackEvent("spin_completed", { prize: selectedPrize?.label, name: userName });
@@ -136,8 +139,11 @@ export default function App() {
       .replace(/On Any Order/gi, "On Any Pizza")
       .replace(/On Pizza Orders/gi, "On Any Pizza");
     setActiveOffer({
+      prizeId: selectedPrize?.id,
       prizeName: cleanPrizeName,
       couponCode: updatedCode || couponCode,
+      prizeValue: selectedPrize?.value,
+      prizeType: selectedPrize?.type,
     });
     trackEvent("coupon_claimed", { mobile: mobile || "unspecified", prize: cleanPrizeName });
   };

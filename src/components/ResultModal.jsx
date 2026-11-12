@@ -4,7 +4,6 @@ import { Copy, Check, MessageSquare, X, Gift, Frown, Sparkles, ShieldCheck, Tick
 import InstagramIcon from "./icons/InstagramIcon";
 import { config } from "../config/config";
 import { trackEvent } from "../utils/analytics";
-import { getWhatsAppOrderLink } from "../utils/whatsapp";
 import { claimCouponService } from "../services/spinService";
 
 export default function ResultModal({
